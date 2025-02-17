@@ -71,18 +71,6 @@ export default function Redirect() {
           return;
         }
 
-        // Verificar si el enlace es privado
-        if (data.is_private) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session || session.user.id !== data.user_id) {
-            renderMessage(
-              'Enlace Privado',
-              'Este enlace solo está disponible para usuarios autorizados.'
-            );
-            return;
-          }
-        }
-
         // Registrar la visita
         const now = new Date();
         const localDate = now.toLocaleDateString('en-CA');
@@ -90,7 +78,7 @@ export default function Redirect() {
         const visitData = {
           date: `${localDate}T${localTime}`,
           userAgent: navigator.userAgent,
-          referrer: document.referrer || 'Directo',
+          referrer: document.referrer || 'Direct',
         };
         const updatedVisitsHistory = [...(data.visits_history || []), visitData];
 
@@ -125,5 +113,32 @@ export default function Redirect() {
     trackVisit();
   }, [shortUrl]);
 
-  return null;
+  return (
+    <>
+      {/* Estilos para la animación del spinner */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontFamily: 'system-ui',
+        color: '#374151'
+      }}>
+        <div style={{
+          border: '16px solid #f3f3f3',
+          borderTop: '16px solid #3498db',
+          borderRadius: '50%',
+          width: '120px',
+          height: '120px',
+          animation: 'spin 2s linear infinite'
+        }} />
+      </div>
+    </>
+  );
 }
