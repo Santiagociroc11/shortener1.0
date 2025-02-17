@@ -34,7 +34,7 @@ export default function Navbar() {
           <div className="flex items-center">
             <Link to="/" className="flex items-center text-gray-900">
               <LinkIcon className="h-6 w-6 mr-2" />
-              <span className="font-bold text-xl">URL Shortener</span>
+              <span className="font-bold text-xl">Acortador con Super Poderes - SCC</span>
             </Link>
           </div>
           <div className="flex items-center space-x-4">
@@ -52,7 +52,7 @@ export default function Navbar() {
                   className="text-gray-700 hover:text-gray-900 flex items-center"
                 >
                   <LogOut className="h-5 w-5 mr-1" />
-                  Sign Out
+                  Cerrar sesión
                 </button>
               </>
             ) : (
@@ -61,7 +61,7 @@ export default function Navbar() {
                 className="text-gray-700 hover:text-gray-900 flex items-center"
               >
                 <User className="h-5 w-5 mr-1" />
-                Sign In
+                Iniciar sesión
               </Link>
             )}
           </div>
