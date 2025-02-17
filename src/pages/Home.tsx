@@ -103,7 +103,7 @@ export default function Home() {
           script_code: scriptCode,
           description,
           expires_at: expiresAt,
-          is_private: true, // Siempre privado
+          is_private: false,
           tags: selectedTags.map(tag => tag.value),
           user_id: user.id,
         },
