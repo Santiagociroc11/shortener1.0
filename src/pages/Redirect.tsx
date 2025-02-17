@@ -99,7 +99,7 @@ export default function Redirect() {
         // Esperar un poco para que se ejecuten los scripts (ajusta el delay según necesidad)
         setTimeout(() => {
           window.location.href = data.original_url;
-        }, 500);
+        }, 1000);
 
       } catch (error) {
         console.error('Error:', error);
