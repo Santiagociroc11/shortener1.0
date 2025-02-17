@@ -15,7 +15,8 @@ interface Link {
   id: string;
   original_url: string;
   short_url: string;
-  script_code: string;
+  // Ahora se maneja como un arreglo de objetos con "name" y "code"
+  script_code: { name: string; code: string }[] | null;
   visits: number;
   created_at: string;
   description?: string;
@@ -42,11 +43,15 @@ export default function Dashboard() {
   const [showQR, setShowQR] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  // Estados para agregar un nuevo script en modo edición
+  const [editingNewScriptName, setEditingNewScriptName] = useState('');
+  const [editingNewScriptCode, setEditingNewScriptCode] = useState('');
+  
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Solo redirigir cuando estemos seguros de que no hay usuario y el loading ha terminado
+    // Solo redirigir cuando se sepa que no hay usuario y loading terminó
     if (!loading && !user) {
       navigate('/login');
       return;
@@ -72,7 +77,7 @@ export default function Dashboard() {
     }
   };
 
-  // Si todavía está cargando, mostrar un spinner
+  // Si loading, mostramos spinner
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -81,7 +86,7 @@ export default function Dashboard() {
     );
   }
 
-  // Si no hay usuario y no está cargando, no renderizar nada (la redirección ya está manejada en el useEffect)
+  // Si no hay usuario, no renderizamos nada
   if (!user) {
     return null;
   }
@@ -108,7 +113,7 @@ export default function Dashboard() {
         .from('links')
         .update({
           original_url: link.original_url,
-          script_code: link.script_code,
+          script_code: link.script_code, // Enviamos el arreglo actualizado
           description: link.description,
           expires_at: link.expires_at,
           is_private: link.is_private,
@@ -127,18 +132,21 @@ export default function Dashboard() {
   };
 
   const filteredLinks = links.filter(link => {
-    const matchesSearch = link.original_url.toLowerCase().includes(filter.toLowerCase()) ||
-                         link.short_url.toLowerCase().includes(filter.toLowerCase()) ||
-                         link.description?.toLowerCase().includes(filter.toLowerCase());
-    
-    const matchesTags = selectedTags.length === 0 || 
-                       selectedTags.every(tag => link.tags?.includes(tag.value));
-    
+    const matchesSearch =
+      link.original_url.toLowerCase().includes(filter.toLowerCase()) ||
+      link.short_url.toLowerCase().includes(filter.toLowerCase()) ||
+      link.description?.toLowerCase().includes(filter.toLowerCase());
+
+    const matchesTags =
+      selectedTags.length === 0 ||
+      selectedTags.every(tag => link.tags?.includes(tag.value));
+
     return matchesSearch && matchesTags;
   });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Barra de búsqueda y filtros */}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Tus Enlaces</h1>
         <div className="flex space-x-4">
@@ -165,13 +173,115 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Lista de enlaces */}
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <ul className="divide-y divide-gray-200">
           {filteredLinks.map(link => (
             <li key={link.id} className="p-6">
               {editingLink?.id === link.id ? (
                 <div className="space-y-4">
-                  {/* ... Campos de edición del enlace ... */}
+                  {/* Edición de URL Original */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">URL Original</label>
+                    <input
+                      type="url"
+                      value={editingLink.original_url}
+                      onChange={(e) =>
+                        setEditingLink({ ...editingLink, original_url: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Sección de edición de scripts */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Scripts de Seguimiento
+                    </label>
+                    {editingLink.script_code &&
+                      editingLink.script_code.map((script, index) => (
+                        <div key={index} className="border p-2 rounded mb-2">
+                          <input
+                            type="text"
+                            value={script.name}
+                            onChange={(e) => {
+                              const newScripts = editingLink.script_code
+                                ? [...editingLink.script_code]
+                                : [];
+                              newScripts[index].name = e.target.value;
+                              setEditingLink({ ...editingLink, script_code: newScripts });
+                            }}
+                            className="w-full px-2 py-1 border rounded mb-1"
+                            placeholder="Nombre del script"
+                          />
+                          <textarea
+                            value={script.code}
+                            onChange={(e) => {
+                              const newScripts = editingLink.script_code
+                                ? [...editingLink.script_code]
+                                : [];
+                              newScripts[index].code = e.target.value;
+                              setEditingLink({ ...editingLink, script_code: newScripts });
+                            }}
+                            className="w-full px-2 py-1 border rounded"
+                            rows={3}
+                            placeholder="Código del script"
+                          ></textarea>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newScripts = editingLink.script_code
+                                ? editingLink.script_code.filter((_, i) => i !== index)
+                                : [];
+                              setEditingLink({ ...editingLink, script_code: newScripts });
+                            }}
+                            className="text-red-500 hover:text-red-700 mt-1"
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                      ))}
+                    {/* Agregar nuevo script en modo edición */}
+                    <div className="mt-4">
+                      <input
+                        type="text"
+                        value={editingNewScriptName}
+                        onChange={(e) => setEditingNewScriptName(e.target.value)}
+                        placeholder="Nombre del script"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md mb-2"
+                      />
+                      <textarea
+                        value={editingNewScriptCode}
+                        onChange={(e) => setEditingNewScriptCode(e.target.value)}
+                        placeholder="Código del script"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                        rows={3}
+                      ></textarea>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!editingNewScriptName || !editingNewScriptCode) {
+                            toast.error("Por favor, ingresa nombre y código del script.");
+                            return;
+                          }
+                          const newScripts = editingLink?.script_code
+                            ? [...editingLink.script_code]
+                            : [];
+                          newScripts.push({
+                            name: editingNewScriptName,
+                            code: editingNewScriptCode,
+                          });
+                          setEditingLink({ ...editingLink!, script_code: newScripts });
+                          setEditingNewScriptName('');
+                          setEditingNewScriptCode('');
+                        }}
+                        className="mt-2 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700"
+                      >
+                        Agregar Script
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="flex space-x-4">
                     <button
                       onClick={() => handleUpdate(editingLink)}
@@ -198,9 +308,7 @@ export default function Dashboard() {
                         {window.location.origin}/{link.short_url}
                       </p>
                       {link.description && (
-                        <p className="mt-1 text-sm text-gray-600">
-                          {link.description}
-                        </p>
+                        <p className="mt-1 text-sm text-gray-600">{link.description}</p>
                       )}
                       {link.expires_at && (
                         <p className="mt-1 text-sm text-gray-500 flex items-center">
@@ -220,9 +328,7 @@ export default function Dashboard() {
                       )}
                     </div>
                     <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-500">
-                        {link.visits} visitas
-                      </span>
+                      <span className="text-sm text-gray-500">{link.visits} visitas</span>
                       <button
                         onClick={() => navigate(`/link/${link.short_url}`)}
                         className="text-blue-500 hover:text-blue-700 flex items-center"

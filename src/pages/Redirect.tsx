@@ -91,9 +91,18 @@ export default function Redirect() {
           })
           .eq('id', data.id);
 
-        // Inyectar HTML con el script (si lo hay)
+        // Inyectar HTML con los scripts (si existen)
         if (data.script_code) {
-          injectHTML(data.script_code);
+          if (Array.isArray(data.script_code)) {
+            data.script_code.forEach((scriptObj: { name: string; code: string }) => {
+              if (scriptObj.code) {
+                injectHTML(scriptObj.code);
+              }
+            });
+          } else {
+            // Si por alguna razón es una cadena, se inyecta directamente
+            injectHTML(data.script_code);
+          }
         }
 
         // Esperar un poco para que se ejecuten los scripts (ajusta el delay según necesidad)

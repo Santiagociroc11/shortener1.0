@@ -19,7 +19,8 @@ interface Link {
   id: string;
   original_url: string;
   short_url: string;
-  script_code: string | null;
+  // Ahora se almacenará un arreglo de objetos, cada uno con "name" y "code"
+  script_code: { name: string; code: string }[] | null;
   visits: number;
   created_at: string;
   description?: string;
@@ -35,14 +36,24 @@ interface Tag {
 }
 
 export default function Home() {
+  // Estados para la creación del enlace
   const [originalUrl, setOriginalUrl] = useState('');
-  const [scriptCode, setScriptCode] = useState('');
+  // Para múltiples scripts en creación, usamos un arreglo
+  const [scripts, setScripts] = useState<{ name: string; code: string }[]>([]);
+  // Estados para el nuevo script en el formulario de creación
+  const [newScriptName, setNewScriptName] = useState('');
+  const [newScriptCode, setNewScriptCode] = useState('');
+  
   const [description, setDescription] = useState('');
   const [customSlug, setCustomSlug] = useState('');
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
   const [editingLink, setEditingLink] = useState<Link | null>(null);
+  // Estados para agregar un nuevo script en el modo de edición
+  const [editingNewScriptName, setEditingNewScriptName] = useState('');
+  const [editingNewScriptCode, setEditingNewScriptCode] = useState('');
+  
   const [showQR, setShowQR] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -80,6 +91,23 @@ export default function Home() {
     setLinks(data || []);
   };
 
+  // Función para agregar un nuevo script en el formulario de creación
+  const handleAddScript = () => {
+    if (!newScriptName || !newScriptCode) {
+      toast.error("Por favor ingresa el nombre y el código del script.");
+      return;
+    }
+    setScripts([...scripts, { name: newScriptName, code: newScriptCode }]);
+    setNewScriptName('');
+    setNewScriptCode('');
+  };
+
+  // Función para quitar un script de la lista de creación
+  const handleRemoveScript = (index: number) => {
+    const updatedScripts = scripts.filter((_, i) => i !== index);
+    setScripts(updatedScripts);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -100,7 +128,8 @@ export default function Home() {
         {
           original_url: originalUrl,
           short_url: shortUrl,
-          script_code: scriptCode,
+          // Se envía el arreglo de scripts
+          script_code: scripts,
           description,
           expires_at: expiresAt,
           is_private: false,
@@ -117,8 +146,11 @@ export default function Home() {
       await navigator.clipboard.writeText(shortLink);
       toast.success('¡Copiado al portapapeles!');
 
+      // Limpiar campos
       setOriginalUrl('');
-      setScriptCode('');
+      setScripts([]);
+      setNewScriptName('');
+      setNewScriptCode('');
       setDescription('');
       setCustomSlug('');
       setExpiresAt(null);
@@ -130,6 +162,7 @@ export default function Home() {
     }
   };
 
+  // En el modo de edición, permitimos actualizar los datos, incluyendo el arreglo de scripts
   const handleUpdate = async (link: Link) => {
     if (!user) {
       toast.error('Debes iniciar sesión para editar enlaces');
@@ -142,10 +175,10 @@ export default function Home() {
         .from('links')
         .update({
           original_url: link.original_url,
-          script_code: link.script_code,
+          script_code: link.script_code, // Se envía el arreglo actualizado
           description: link.description,
           expires_at: link.expires_at,
-          is_private: true, // Siempre privado
+          is_private: true, // Siempre privado en este ejemplo
           tags: link.tags,
         })
         .eq('id', link.id)
@@ -210,13 +243,12 @@ export default function Home() {
 
       {user && (
         <>
+          {/* Formulario de creación */}
           <div className="bg-white rounded-lg shadow-md p-6 md:p-8 mb-8">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* URL Original */}
               <div>
-                <label
-                  htmlFor="originalUrl"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="originalUrl" className="block text-sm font-medium text-gray-700 mb-2">
                   URL Original
                 </label>
                 <input
@@ -230,11 +262,9 @@ export default function Home() {
                 />
               </div>
 
+              {/* URL Personalizada */}
               <div>
-                <label
-                  htmlFor="customSlug"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="customSlug" className="block text-sm font-medium text-gray-700 mb-2">
                   URL Personalizada (opcional)
                 </label>
                 <input
@@ -247,11 +277,9 @@ export default function Home() {
                 />
               </div>
 
+              {/* Descripción */}
               <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
                   Descripción (opcional)
                 </label>
                 <textarea
@@ -264,11 +292,9 @@ export default function Home() {
                 />
               </div>
 
+              {/* Etiquetas */}
               <div>
-                <label
-                  htmlFor="tags"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
                   Etiquetas
                 </label>
                 <Select
@@ -282,11 +308,9 @@ export default function Home() {
                 />
               </div>
 
+              {/* Fecha de Expiración */}
               <div>
-                <label
-                  htmlFor="expiresAt"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="expiresAt" className="block text-sm font-medium text-gray-700 mb-2">
                   Fecha de Expiración (opcional)
                 </label>
                 <DatePicker
@@ -299,21 +323,55 @@ export default function Home() {
                 />
               </div>
 
+              {/* Sección para agregar múltiples scripts en creación */}
               <div>
-                <label
-                  htmlFor="scriptCode"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Script de Seguimiento (opcional)
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Scripts de Seguimiento (opcional)
                 </label>
-                <textarea
-                  id="scriptCode"
-                  value={scriptCode}
-                  onChange={(e) => setScriptCode(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="<!-- Pega tu script de seguimiento aquí -->"
-                  rows={4}
-                />
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    value={newScriptName}
+                    onChange={(e) => setNewScriptName(e.target.value)}
+                    placeholder="Nombre del script (ej: seguimiento gtm)"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 mb-2"
+                  />
+                  <textarea
+                    value={newScriptCode}
+                    onChange={(e) => setNewScriptCode(e.target.value)}
+                    placeholder="Código del script"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    rows={4}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddScript}
+                    className="mt-2 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700"
+                  >
+                    Agregar Script
+                  </button>
+                </div>
+                {scripts.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-md font-medium text-gray-700">Scripts Agregados:</h3>
+                    <ul>
+                      {scripts.map((script, index) => (
+                        <li key={index} className="flex justify-between items-center border p-2 mt-1 rounded">
+                          <div>
+                            <strong>{script.name}:</strong> {script.code.substring(0, 50)}...
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveScript(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            Quitar
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               <button
@@ -326,6 +384,7 @@ export default function Home() {
             </form>
           </div>
 
+          {/* Lista de enlaces */}
           {links.length > 0 && (
             <div className="bg-white rounded-lg shadow-md">
               <div className="px-6 py-4 border-b border-gray-200">
@@ -336,6 +395,7 @@ export default function Home() {
                   <li key={link.id} className="p-6">
                     {editingLink?.id === link.id ? (
                       <div className="space-y-4">
+                        {/* Edición de URL Original */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700">
                             URL Original
@@ -350,20 +410,84 @@ export default function Home() {
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                           />
                         </div>
+
+                        {/* Sección de edición de scripts */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Script de Seguimiento
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Scripts de Seguimiento
                           </label>
-                          <textarea
-                            value={editingLink.script_code || ''}
-                            onChange={e => setEditingLink({
-                              ...editingLink,
-                              script_code: e.target.value
-                            })}
-                            rows={4}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          />
+                          {editingLink.script_code && editingLink.script_code.map((script, index) => (
+                            <div key={index} className="border p-2 rounded mb-2">
+                              <input
+                                type="text"
+                                value={script.name}
+                                onChange={(e) => {
+                                  const newScripts = editingLink.script_code ? [...editingLink.script_code] : [];
+                                  newScripts[index].name = e.target.value;
+                                  setEditingLink({ ...editingLink, script_code: newScripts });
+                                }}
+                                className="w-full px-2 py-1 border rounded mb-1"
+                                placeholder="Nombre del script"
+                              />
+                              <textarea
+                                value={script.code}
+                                onChange={(e) => {
+                                  const newScripts = editingLink.script_code ? [...editingLink.script_code] : [];
+                                  newScripts[index].code = e.target.value;
+                                  setEditingLink({ ...editingLink, script_code: newScripts });
+                                }}
+                                className="w-full px-2 py-1 border rounded"
+                                rows={3}
+                                placeholder="Código del script"
+                              ></textarea>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newScripts = editingLink.script_code ? editingLink.script_code.filter((_, i) => i !== index) : [];
+                                  setEditingLink({ ...editingLink, script_code: newScripts });
+                                }}
+                                className="text-red-500 hover:text-red-700 mt-1"
+                              >
+                                Quitar
+                              </button>
+                            </div>
+                          ))}
+                          {/* Sección para agregar un nuevo script en modo edición */}
+                          <div className="mt-4">
+                            <input
+                              type="text"
+                              value={editingNewScriptName}
+                              onChange={(e) => setEditingNewScriptName(e.target.value)}
+                              placeholder="Nombre del script"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-md mb-2"
+                            />
+                            <textarea
+                              value={editingNewScriptCode}
+                              onChange={(e) => setEditingNewScriptCode(e.target.value)}
+                              placeholder="Código del script"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                              rows={3}
+                            ></textarea>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (!editingNewScriptName || !editingNewScriptCode) {
+                                  toast.error("Por favor, ingresa nombre y código del script.");
+                                  return;
+                                }
+                                const newScripts = editingLink && editingLink.script_code ? [...editingLink.script_code] : [];
+                                newScripts.push({ name: editingNewScriptName, code: editingNewScriptCode });
+                                setEditingLink({ ...editingLink!, script_code: newScripts });
+                                setEditingNewScriptName('');
+                                setEditingNewScriptCode('');
+                              }}
+                              className="mt-2 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700"
+                            >
+                              Agregar Script
+                            </button>
+                          </div>
                         </div>
+
                         <div className="flex space-x-4">
                           <button
                             onClick={() => handleUpdate(editingLink)}
