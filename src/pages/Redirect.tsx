@@ -1,11 +1,50 @@
 import React, { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import toast from 'react-hot-toast';
+// Nota: Si no usas `toast` en este componente, puedes remover la importación de react-hot-toast.
 
 export default function Redirect() {
   const { shortUrl } = useParams<{ shortUrl: string }>();
   const visitTracked = useRef(false);
+
+  // Función para renderizar mensajes en pantalla
+  const renderMessage = (title: string, message: string) => {
+    document.body.innerHTML = `
+      <div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui;color:#374151;">
+        <div style="text-align:center;">
+          <h1 style="font-size:1.5rem;font-weight:bold;margin-bottom:1rem;">${title}</h1>
+          <p>${message}</p>
+        </div>
+      </div>
+    `;
+  };
+
+  // Función para inyectar HTML completo y procesar los scripts
+  const injectHTML = (htmlString: string) => {
+    // Crear un contenedor temporal
+    const container = document.createElement('div');
+    container.innerHTML = htmlString;
+    document.body.appendChild(container);
+
+    // Encontrar y procesar todos los scripts
+    const scripts = container.getElementsByTagName('script');
+    const scriptsArray = Array.from(scripts);
+    
+    scriptsArray.forEach(oldScript => {
+      const newScript = document.createElement('script');
+      
+      // Copiar atributos del script original
+      Array.from(oldScript.attributes).forEach(attr => {
+        newScript.setAttribute(attr.name, attr.value);
+      });
+
+      // Asignar el contenido interno del script
+      newScript.text = oldScript.innerHTML;
+      
+      // Reemplazar el script original por el nuevo para que se ejecute
+      oldScript.parentNode?.replaceChild(newScript, oldScript);
+    });
+  };
 
   useEffect(() => {
     const trackVisit = async () => {
@@ -25,14 +64,10 @@ export default function Redirect() {
 
         // Verificar si el enlace ha expirado
         if (data.expires_at && new Date(data.expires_at) < new Date()) {
-          document.body.innerHTML = `
-            <div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui;color:#374151;">
-              <div style="text-align:center;">
-                <h1 style="font-size:1.5rem;font-weight:bold;margin-bottom:1rem;">Este enlace ha expirado</h1>
-                <p>El enlace ya no está disponible porque ha superado su fecha de expiración.</p>
-              </div>
-            </div>
-          `;
+          renderMessage(
+            'Este enlace ha expirado',
+            'El enlace ya no está disponible porque ha superado su fecha de expiración.'
+          );
           return;
         }
 
@@ -40,28 +75,23 @@ export default function Redirect() {
         if (data.is_private) {
           const { data: { session } } = await supabase.auth.getSession();
           if (!session || session.user.id !== data.user_id) {
-            document.body.innerHTML = `
-              <div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui;color:#374151;">
-                <div style="text-align:center;">
-                  <h1 style="font-size:1.5rem;font-weight:bold;margin-bottom:1rem;">Enlace Privado</h1>
-                  <p>Este enlace solo está disponible para usuarios autorizados.</p>
-                </div>
-              </div>
-            `;
+            renderMessage(
+              'Enlace Privado',
+              'Este enlace solo está disponible para usuarios autorizados.'
+            );
             return;
           }
         }
 
+        // Registrar la visita
         const now = new Date();
-        const localDate = now.toLocaleDateString("en-CA");
-        const localTime = now.toTimeString().split(" ")[0];
-
+        const localDate = now.toLocaleDateString('en-CA');
+        const localTime = now.toTimeString().split(' ')[0];
         const visitData = {
           date: `${localDate}T${localTime}`,
           userAgent: navigator.userAgent,
-          referrer: document.referrer || "Directo",
+          referrer: document.referrer || 'Directo',
         };
-
         const updatedVisitsHistory = [...(data.visits_history || []), visitData];
 
         await supabase
@@ -73,24 +103,22 @@ export default function Redirect() {
           })
           .eq('id', data.id);
 
+        // Inyectar HTML con el script (si lo hay)
         if (data.script_code) {
-          const scriptElement = document.createElement('div');
-          scriptElement.innerHTML = data.script_code;
-          document.body.appendChild(scriptElement);
+          injectHTML(data.script_code);
         }
 
-        window.location.href = data.original_url;
+        // Esperar un poco para que se ejecuten los scripts (ajusta el delay según necesidad)
+        setTimeout(() => {
+          window.location.href = data.original_url;
+        }, 500);
 
       } catch (error) {
         console.error('Error:', error);
-        document.body.innerHTML = `
-          <div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui;color:#374151;">
-            <div style="text-align:center;">
-              <h1 style="font-size:1.5rem;font-weight:bold;margin-bottom:1rem;">Enlace no encontrado</h1>
-              <p>El enlace que buscas no existe o ha sido eliminado.</p>
-            </div>
-          </div>
-        `;
+        renderMessage(
+          'Enlace no encontrado',
+          'El enlace que buscas no existe o ha sido eliminado.'
+        );
       }
     };
 
