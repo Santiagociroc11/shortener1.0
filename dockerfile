@@ -24,7 +24,7 @@ RUN VITE_SUPABASE_URL=$VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_A
 RUN npm install -g serve
 
 # Exponer el puerto 4173 para que EasyPanel lo use
-EXPOSE 1113
+EXPOSE 4444
 
 # Servir la aplicación con `serve`
-CMD ["sh", "-c", "exec serve -s dist -l 1113"]
+CMD ["sh", "-c", "exec serve -s dist -l 4444"]
