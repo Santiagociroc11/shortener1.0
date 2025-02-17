@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Link2, ExternalLink, Pencil, Trash2, QrCode, Calendar, Tag } from 'lucide-react';
+import { Link2, ExternalLink, Pencil, Trash2, QrCode, Calendar, Tag, Copy } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -430,6 +430,17 @@ export default function Home() {
                             >
                               <Trash2 className="h-5 w-5" />
                             </button>
+                            <button
+                              onClick={async () => {
+                                const shortLink = `${window.location.origin}/${link.short_url}`;
+                                await navigator.clipboard.writeText(shortLink);
+                                toast.success('¡Copiado al portapapeles!');
+                              }}
+                              className="text-gray-400 hover:text-gray-500"
+                              title="Copiar"
+                            >
+                              <Copy className="h-5 w-5" />
+                            </button>
                             <a
                               href={`/${link.short_url}`}
                               target="_blank"
@@ -476,12 +487,25 @@ export default function Home() {
                 level="H"
               />
             </div>
-            <button
-              onClick={() => setShowQR(null)}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-            >
-              Cerrar
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  const shortLink = `${window.location.origin}/${showQR}`;
+                  await navigator.clipboard.writeText(shortLink);
+                  toast.success('¡Copiado al portapapeles!');
+                }}
+                className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 flex items-center justify-center"
+              >
+                <Copy className="w-5 h-5 mr-2" />
+                Copiar enlace
+              </button>
+              <button
+                onClick={() => setShowQR(null)}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}
