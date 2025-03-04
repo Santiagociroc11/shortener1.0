@@ -46,7 +46,7 @@ export default function Dashboard() {
   // Estados para agregar un nuevo script en modo edición
   const [editingNewScriptName, setEditingNewScriptName] = useState('');
   const [editingNewScriptCode, setEditingNewScriptCode] = useState('');
-  
+
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -99,7 +99,7 @@ export default function Dashboard() {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       setLinks(links.filter(link => link.id !== id));
       toast.success('Enlace eliminado con éxito');
     } catch (error) {
@@ -122,7 +122,7 @@ export default function Dashboard() {
         .eq('id', link.id);
 
       if (error) throw error;
-      
+
       setLinks(links.map(l => l.id === link.id ? link : l));
       setEditingLink(null);
       toast.success('Enlace actualizado con éxito');
@@ -392,6 +392,12 @@ export default function Dashboard() {
         </ul>
       </div>
 
+      <footer className="bg-white shadow-sm mt-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
+          <p className="text-gray-700">desarrollado por santiago ciro - Automscc</p>
+        </div>
+      </footer>
+
       {/* Modal QR */}
       {showQR && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -426,6 +432,9 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      
     </div>
+    
   );
 }

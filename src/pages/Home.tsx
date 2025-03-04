@@ -43,7 +43,7 @@ export default function Home() {
   // Estados para el nuevo script en el formulario de creación
   const [newScriptName, setNewScriptName] = useState('');
   const [newScriptCode, setNewScriptCode] = useState('');
-  
+
   const [description, setDescription] = useState('');
   const [customSlug, setCustomSlug] = useState('');
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
@@ -53,7 +53,7 @@ export default function Home() {
   // Estados para agregar un nuevo script en el modo de edición
   const [editingNewScriptName, setEditingNewScriptName] = useState('');
   const [editingNewScriptCode, setEditingNewScriptCode] = useState('');
-  
+
   const [showQR, setShowQR] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -142,7 +142,7 @@ export default function Home() {
 
       const shortLink = `${window.location.origin}/${shortUrl}`;
       toast.success('¡URL acortada con éxito!');
-      
+
       await navigator.clipboard.writeText(shortLink);
       toast.success('¡Copiado al portapapeles!');
 
@@ -185,7 +185,7 @@ export default function Home() {
         .eq('user_id', user.id);
 
       if (error) throw error;
-      
+
       setLinks(links.map(l => l.id === link.id ? link : l));
       setEditingLink(null);
       toast.success('Enlace actualizado con éxito');
@@ -209,7 +209,7 @@ export default function Home() {
         .eq('user_id', user.id);
 
       if (error) throw error;
-      
+
       setLinks(links.filter(link => link.id !== id));
       toast.success('Enlace eliminado con éxito');
     } catch (error) {
@@ -633,6 +633,12 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      <footer className="bg-white shadow-sm mt-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
+          <p className="text-gray-700">desarrollado por santiago ciro - Automscc</p>
+        </div>
+      </footer>
     </div>
   );
 }
