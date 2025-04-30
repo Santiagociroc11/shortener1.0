@@ -15,18 +15,79 @@ function generateShortUrl() {
   return Math.random().toString(36).substring(2, 8);
 }
 
+function generateYouTubeDeepLink(url: string): string {
+  const videoId = getYouTubeVideoIdFromUrl(url);
+  if (!videoId) return '';
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirect to YouTube</title>
+</head>
+<body>
+    <script type="text/javascript">
+        window.onload = function() {
+            var youtubeVideoId = "${videoId}";
+            if (youtubeVideoId) {
+                redirectToYouTube(youtubeVideoId);
+                addKillPopupListener();
+            } else {
+                console.error("Video ID no encontrado.");
+            }
+        };
+
+        function redirectToYouTube(videoId) {
+            var desktopFallback = "https://youtube.com/watch?v=" + videoId,
+                mobileFallback = "https://youtube.com/watch?v=" + videoId,
+                app = "vnd.youtube://" + videoId;
+
+            if (isMobileDevice()) {
+                window.location = app;
+                window.setTimeout(function() {
+                    window.location = mobileFallback;
+                }, 25);
+            } else {
+                window.location = desktopFallback;
+            }
+        }
+
+        function isMobileDevice() {
+            return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        }
+
+        function addKillPopupListener() {
+            window.addEventListener('pagehide', function() {
+                window.removeEventListener('pagehide', arguments.callee);
+            });
+        }
+    </script>
+</body>
+</html>
+  `;
+}
+
+function getYouTubeVideoIdFromUrl(url: string): string | null {
+  const match = url.match(/(?:v=|\/live\/|\/embed\/|\/v\/|\/.+\/)([^&?/]+)/);
+  return match ? match[1] : null;
+}
+
+function isYouTubeUrl(url: string): boolean {
+  return url.includes('youtube.com') || url.includes('youtu.be');
+}
+
 interface Link {
   id: string;
   original_url: string;
   short_url: string;
-  // Ahora se almacenará un arreglo de objetos, cada uno con "name" y "code"
   script_code: { name: string; code: string }[] | null;
   visits: number;
   created_at: string;
   description?: string;
   custom_slug?: string;
   expires_at?: Date | null;
-  tags?: string[];
   is_private?: boolean;
 }
 
@@ -47,7 +108,6 @@ export default function Home() {
   const [description, setDescription] = useState('');
   const [customSlug, setCustomSlug] = useState('');
   const [expiresAt, setExpiresAt] = useState<Date | null>(null);
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
   const [editingLink, setEditingLink] = useState<Link | null>(null);
   // Estados para agregar un nuevo script en el modo de edición
@@ -58,12 +118,7 @@ export default function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const tagOptions = [
-    { value: 'personal', label: 'Personal' },
-    { value: 'trabajo', label: 'Trabajo' },
-    { value: 'social', label: 'Social' },
-    { value: 'proyecto', label: 'Proyecto' },
-  ];
+  const [isYouTubeDeepLink, setIsYouTubeDeepLink] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -124,16 +179,22 @@ export default function Home() {
 
     try {
       const shortUrl = customSlug || generateShortUrl();
+      let scriptCode = scripts;
+      
+      // Si es una URL de YouTube y se seleccionó el deeplink, agregamos el script
+      if (isYouTubeUrl(originalUrl) && isYouTubeDeepLink) {
+        const deepLinkScript = generateYouTubeDeepLink(originalUrl);
+        scriptCode = [...scripts, { name: 'YouTube Deep Link', code: deepLinkScript }];
+      }
+
       const { error } = await supabase.from('links').insert([
         {
           original_url: originalUrl,
           short_url: shortUrl,
-          // Se envía el arreglo de scripts
-          script_code: scripts,
+          script_code: scriptCode,
           description,
           expires_at: expiresAt,
           is_private: false,
-          tags: selectedTags.map(tag => tag.value),
           user_id: user.id,
         },
       ]);
@@ -154,7 +215,7 @@ export default function Home() {
       setDescription('');
       setCustomSlug('');
       setExpiresAt(null);
-      setSelectedTags([]);
+      setIsYouTubeDeepLink(false);
       fetchLinks();
     } catch (error) {
       toast.error('Error al crear la URL corta');
@@ -175,11 +236,10 @@ export default function Home() {
         .from('links')
         .update({
           original_url: link.original_url,
-          script_code: link.script_code, // Se envía el arreglo actualizado
+          script_code: link.script_code,
           description: link.description,
           expires_at: link.expires_at,
-          is_private: true, // Siempre privado en este ejemplo
-          tags: link.tags,
+          is_private: true,
         })
         .eq('id', link.id)
         .eq('user_id', user.id);
@@ -255,12 +315,32 @@ export default function Home() {
                   type="url"
                   id="originalUrl"
                   value={originalUrl}
-                  onChange={(e) => setOriginalUrl(e.target.value)}
+                  onChange={(e) => {
+                    setOriginalUrl(e.target.value);
+                    // Resetear el estado de YouTube Deep Link cuando cambia la URL
+                    setIsYouTubeDeepLink(false);
+                  }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   placeholder="https://ejemplo.com"
                   required
                 />
               </div>
+
+              {/* Opción de YouTube Deep Link */}
+              {isYouTubeUrl(originalUrl) && (
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="youtubeDeepLink"
+                    checked={isYouTubeDeepLink}
+                    onChange={(e) => setIsYouTubeDeepLink(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="youtubeDeepLink" className="ml-2 block text-sm text-gray-700">
+                    Activar Deep Link para YouTube (abrirá la app de YouTube en dispositivos móviles)
+                  </label>
+                </div>
+              )}
 
               {/* URL Personalizada */}
               <div>
@@ -289,22 +369,6 @@ export default function Home() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Descripción del enlace"
                   rows={2}
-                />
-              </div>
-
-              {/* Etiquetas */}
-              <div>
-                <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
-                  Etiquetas
-                </label>
-                <Select
-                  isMulti
-                  options={tagOptions}
-                  value={selectedTags}
-                  onChange={(newValue) => setSelectedTags(newValue as Tag[])}
-                  className="basic-multi-select"
-                  classNamePrefix="select"
-                  placeholder="Selecciona etiquetas..."
                 />
               </div>
 
@@ -517,16 +581,6 @@ export default function Home() {
                               <p className="mt-1 text-sm text-gray-600">
                                 {link.description}
                               </p>
-                            )}
-                            {link.tags && link.tags.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {link.tags.map(tag => (
-                                  <span key={tag} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    <Tag className="w-3 h-3 mr-1" />
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
                             )}
                           </div>
                           <div className="flex items-center space-x-4">

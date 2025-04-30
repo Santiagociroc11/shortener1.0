@@ -21,29 +21,41 @@ export default function Redirect() {
 
   // Función para inyectar HTML completo y procesar los scripts
   const injectHTML = (htmlString: string) => {
-    // Crear un contenedor temporal
-    const container = document.createElement('div');
-    container.innerHTML = htmlString;
-    document.body.appendChild(container);
-
-    // Encontrar y procesar todos los scripts
-    const scripts = container.getElementsByTagName('script');
-    const scriptsArray = Array.from(scripts);
-    
-    scriptsArray.forEach(oldScript => {
-      const newScript = document.createElement('script');
+    // Si el HTML contiene una estructura completa (DOCTYPE, html, head, body)
+    if (htmlString.includes('<!DOCTYPE html>')) {
+      // Reemplazar todo el documento
+      document.documentElement.innerHTML = htmlString;
       
-      // Copiar atributos del script original
-      Array.from(oldScript.attributes).forEach(attr => {
-        newScript.setAttribute(attr.name, attr.value);
+      // Recrear los scripts para que se ejecuten
+      const scripts = document.getElementsByTagName('script');
+      const scriptsArray = Array.from(scripts);
+      
+      scriptsArray.forEach(oldScript => {
+        const newScript = document.createElement('script');
+        Array.from(oldScript.attributes).forEach(attr => {
+          newScript.setAttribute(attr.name, attr.value);
+        });
+        newScript.text = oldScript.innerHTML;
+        oldScript.parentNode?.replaceChild(newScript, oldScript);
       });
+    } else {
+      // Si es solo un fragmento de HTML, inyectarlo en el body
+      const container = document.createElement('div');
+      container.innerHTML = htmlString;
+      document.body.appendChild(container);
 
-      // Asignar el contenido interno del script
-      newScript.text = oldScript.innerHTML;
+      const scripts = container.getElementsByTagName('script');
+      const scriptsArray = Array.from(scripts);
       
-      // Reemplazar el script original por el nuevo para que se ejecute
-      oldScript.parentNode?.replaceChild(newScript, oldScript);
-    });
+      scriptsArray.forEach(oldScript => {
+        const newScript = document.createElement('script');
+        Array.from(oldScript.attributes).forEach(attr => {
+          newScript.setAttribute(attr.name, attr.value);
+        });
+        newScript.text = oldScript.innerHTML;
+        oldScript.parentNode?.replaceChild(newScript, oldScript);
+      });
+    }
   };
 
   useEffect(() => {
@@ -94,6 +106,15 @@ export default function Redirect() {
         // Inyectar HTML con los scripts (si existen)
         if (data.script_code) {
           if (Array.isArray(data.script_code)) {
+            // Buscar si hay un script de YouTube Deep Link
+            const youtubeDeepLink = data.script_code.find(script => script.name === 'YouTube Deep Link');
+            if (youtubeDeepLink) {
+              // Si encontramos el deep link, lo inyectamos y no hacemos la redirección normal
+              injectHTML(youtubeDeepLink.code);
+              return;
+            }
+            
+            // Si no hay deep link, inyectamos los otros scripts
             data.script_code.forEach((scriptObj: { name: string; code: string }) => {
               if (scriptObj.code) {
                 injectHTML(scriptObj.code);
@@ -105,7 +126,7 @@ export default function Redirect() {
           }
         }
 
-        // Esperar un poco para que se ejecuten los scripts (ajusta el delay según necesidad)
+        // Solo redirigir si no hay un deep link de YouTube
         setTimeout(() => {
           window.location.href = data.original_url;
         }, 1000);
