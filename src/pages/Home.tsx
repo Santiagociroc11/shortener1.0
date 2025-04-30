@@ -38,7 +38,7 @@ function generateYouTubeDeepLink(url: string): string {
 
         function getYouTubeVideoIdFromUrl(url) {
             // Extraer el ID del video, ya sea de una URL de video regular o de una transmisión en vivo
-            var match = url.match(/(?:v=|\/live\/|\/embed\/|\/v\/|\/.+\/)([^&?/]+)/);
+            var match = url.match(/(?:v=|\\/live\\/|\\/embed\\/|\\/v\\/|\\/.+\\/)([^&?/]+)/);
             return match ? match[1] : null;
         }
 
