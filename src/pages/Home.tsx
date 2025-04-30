@@ -16,9 +16,6 @@ function generateShortUrl() {
 }
 
 function generateYouTubeDeepLink(url: string): string {
-  const videoId = getYouTubeVideoIdFromUrl(url);
-  if (!videoId) return '';
-
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -29,55 +26,50 @@ function generateYouTubeDeepLink(url: string): string {
 </head>
 <body>
     <script type="text/javascript">
-        console.log('Iniciando redirección de YouTube...');
-        console.log('Video ID:', "${videoId}");
-        console.log('URL Original:', "${url}");
-        console.log('Es dispositivo móvil:', isMobileDevice());
+        window.onload = function() {
+            var youtubeVideoId = getYouTubeVideoIdFromUrl("${url}");
+            if (youtubeVideoId) {
+                redirectToYouTube(youtubeVideoId);
+                addKillPopupListener();
+            } else {
+                console.error("Video ID no encontrado.");
+            }
+        };
 
-        function isMobileDevice() {
-            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            const isMobile = /android|iphone|ipad|ipod/i.test(userAgent);
-            console.log('User Agent:', userAgent);
-            console.log('Es móvil:', isMobile);
-            return isMobile;
+        function getYouTubeVideoIdFromUrl(url) {
+            // Extraer el ID del video, ya sea de una URL de video regular o de una transmisión en vivo
+            var match = url.match(/(?:v=|\/live\/|\/embed\/|\/v\/|\/.+\/)([^&?/]+)/);
+            return match ? match[1] : null;
         }
 
-        function redirectToYouTube(videoId, originalUrl) {
-            console.log('Intentando redirección...');
-            const app = "vnd.youtube://" + videoId;
-            const isMobile = isMobileDevice();
+        function redirectToYouTube(videoId) {
+            var desktopFallback = "https://youtube.com/watch?v=" + videoId,
+                mobileFallback = "https://youtube.com/watch?v=" + videoId,
+                app = "vnd.youtube://" + videoId;
 
-            if (isMobile) {
-                console.log('Intentando abrir app de YouTube...');
-                window.location.href = app;
-                
-                // Fallback después de 2 segundos
-                setTimeout(function() {
-                    console.log('Fallback a URL web...');
-                    window.location.href = originalUrl;
-                }, 2000);
+            if (isMobileDevice()) {
+                window.location = app;
+                window.setTimeout(function() {
+                    window.location = mobileFallback;
+                }, 25);
             } else {
-                console.log('Redirigiendo a URL web...');
-                window.location.href = originalUrl;
+                window.location = desktopFallback;
             }
         }
 
-        // Intentar redirección inmediatamente
-        if ("${videoId}") {
-            redirectToYouTube("${videoId}", "${url}");
-        } else {
-            console.error("Video ID no encontrado.");
-            window.location.href = "${url}";
+        function isMobileDevice() {
+            return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        }
+
+        function addKillPopupListener() {
+            window.addEventListener('pagehide', function() {
+                window.removeEventListener('pagehide', arguments.callee);
+            });
         }
     </script>
 </body>
 </html>
   `;
-}
-
-function getYouTubeVideoIdFromUrl(url: string): string | null {
-  const match = url.match(/(?:v=|\/live\/|\/embed\/|\/v\/|\/.+\/)([^&?/]+)/);
-  return match ? match[1] : null;
 }
 
 function isYouTubeUrl(url: string): boolean {
@@ -709,3 +701,4 @@ export default function Home() {
     </div>
   );
 }
+
