@@ -21,8 +21,11 @@ export default function Redirect() {
 
   // Función para inyectar HTML completo y procesar los scripts
   const injectHTML = (htmlString: string) => {
+    console.log('Inyectando HTML:', htmlString);
+    
     // Si el HTML contiene una estructura completa (DOCTYPE, html, head, body)
     if (htmlString.includes('<!DOCTYPE html>')) {
+      console.log('HTML completo detectado');
       // Reemplazar todo el documento
       document.documentElement.innerHTML = htmlString;
       
@@ -31,6 +34,7 @@ export default function Redirect() {
       const scriptsArray = Array.from(scripts);
       
       scriptsArray.forEach(oldScript => {
+        console.log('Procesando script:', oldScript.text);
         const newScript = document.createElement('script');
         Array.from(oldScript.attributes).forEach(attr => {
           newScript.setAttribute(attr.name, attr.value);
@@ -39,6 +43,7 @@ export default function Redirect() {
         oldScript.parentNode?.replaceChild(newScript, oldScript);
       });
     } else {
+      console.log('Fragmento HTML detectado');
       // Si es solo un fragmento de HTML, inyectarlo en el body
       const container = document.createElement('div');
       container.innerHTML = htmlString;
@@ -48,6 +53,7 @@ export default function Redirect() {
       const scriptsArray = Array.from(scripts);
       
       scriptsArray.forEach(oldScript => {
+        console.log('Procesando script:', oldScript.text);
         const newScript = document.createElement('script');
         Array.from(oldScript.attributes).forEach(attr => {
           newScript.setAttribute(attr.name, attr.value);

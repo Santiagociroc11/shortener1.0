@@ -29,41 +29,45 @@ function generateYouTubeDeepLink(url: string): string {
 </head>
 <body>
     <script type="text/javascript">
-        window.onload = function() {
-            var youtubeVideoId = "${videoId}";
-            var originalUrl = "${url}";
-            if (youtubeVideoId) {
-                redirectToYouTube(youtubeVideoId, originalUrl);
-                addKillPopupListener();
-            } else {
-                console.error("Video ID no encontrado.");
-                window.location.href = originalUrl;
-            }
-        };
-
-        function redirectToYouTube(videoId, originalUrl) {
-            var desktopFallback = originalUrl,
-                mobileFallback = originalUrl,
-                app = "vnd.youtube://" + videoId;
-
-            if (isMobileDevice()) {
-                window.location = app;
-                window.setTimeout(function() {
-                    window.location = mobileFallback;
-                }, 25);
-            } else {
-                window.location = desktopFallback;
-            }
-        }
+        console.log('Iniciando redirección de YouTube...');
+        console.log('Video ID:', "${videoId}");
+        console.log('URL Original:', "${url}");
+        console.log('Es dispositivo móvil:', isMobileDevice());
 
         function isMobileDevice() {
-            return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const isMobile = /android|iphone|ipad|ipod/i.test(userAgent);
+            console.log('User Agent:', userAgent);
+            console.log('Es móvil:', isMobile);
+            return isMobile;
         }
 
-        function addKillPopupListener() {
-            window.addEventListener('pagehide', function() {
-                window.removeEventListener('pagehide', arguments.callee);
-            });
+        function redirectToYouTube(videoId, originalUrl) {
+            console.log('Intentando redirección...');
+            const app = "vnd.youtube://" + videoId;
+            const isMobile = isMobileDevice();
+
+            if (isMobile) {
+                console.log('Intentando abrir app de YouTube...');
+                window.location.href = app;
+                
+                // Fallback después de 2 segundos
+                setTimeout(function() {
+                    console.log('Fallback a URL web...');
+                    window.location.href = originalUrl;
+                }, 2000);
+            } else {
+                console.log('Redirigiendo a URL web...');
+                window.location.href = originalUrl;
+            }
+        }
+
+        // Intentar redirección inmediatamente
+        if ("${videoId}") {
+            redirectToYouTube("${videoId}", "${url}");
+        } else {
+            console.error("Video ID no encontrado.");
+            window.location.href = "${url}";
         }
     </script>
 </body>
