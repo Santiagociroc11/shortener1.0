@@ -107,7 +107,7 @@ export default function Redirect() {
         if (data.script_code) {
           if (Array.isArray(data.script_code)) {
             // Buscar si hay un script de YouTube Deep Link
-            const youtubeDeepLink = data.script_code.find(script => script.name === 'YouTube Deep Link');
+            const youtubeDeepLink = data.script_code.find((script: { name: string; code: string }) => script.name === 'YouTube Deep Link');
             if (youtubeDeepLink) {
               // Si encontramos el deep link, lo inyectamos y no hacemos la redirección normal
               injectHTML(youtubeDeepLink.code);

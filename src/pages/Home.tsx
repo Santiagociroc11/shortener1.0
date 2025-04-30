@@ -31,17 +31,19 @@ function generateYouTubeDeepLink(url: string): string {
     <script type="text/javascript">
         window.onload = function() {
             var youtubeVideoId = "${videoId}";
+            var originalUrl = "${url}";
             if (youtubeVideoId) {
-                redirectToYouTube(youtubeVideoId);
+                redirectToYouTube(youtubeVideoId, originalUrl);
                 addKillPopupListener();
             } else {
                 console.error("Video ID no encontrado.");
+                window.location.href = originalUrl;
             }
         };
 
-        function redirectToYouTube(videoId) {
-            var desktopFallback = "https://youtube.com/watch?v=" + videoId,
-                mobileFallback = "https://youtube.com/watch?v=" + videoId,
+        function redirectToYouTube(videoId, originalUrl) {
+            var desktopFallback = originalUrl,
+                mobileFallback = originalUrl,
                 app = "vnd.youtube://" + videoId;
 
             if (isMobileDevice()) {
@@ -119,6 +121,13 @@ export default function Home() {
   const navigate = useNavigate();
 
   const [isYouTubeDeepLink, setIsYouTubeDeepLink] = useState(false);
+
+  const tagOptions = [
+    { value: 'personal', label: 'Personal' },
+    { value: 'trabajo', label: 'Trabajo' },
+    { value: 'social', label: 'Social' },
+    { value: 'proyecto', label: 'Proyecto' },
+  ];
 
   useEffect(() => {
     if (user) {
