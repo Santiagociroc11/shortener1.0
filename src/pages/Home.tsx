@@ -423,12 +423,13 @@ export default function Home() {
                           </label>
                           <input
                             type="text"
-                            value={editingLink.title}
+                            value={editingLink.title || ''}
                             onChange={e => setEditingLink({
                               ...editingLink,
                               title: e.target.value
                             })}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            placeholder="Título del enlace"
                           />
                         </div>
 
