@@ -15,72 +15,6 @@ function generateShortUrl() {
   return Math.random().toString(36).substring(2, 8);
 }
 
-function generateYouTubeDeepLink(url: string): string {
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirect to YouTube</title>
-</head>
-<body>
-    <script type="text/javascript">
-        (function() {
-            var youtubeVideoId = getYouTubeVideoIdFromUrl("${url}");
-            console.log('Video ID extraído:', youtubeVideoId);
-            
-            if (youtubeVideoId) {
-                redirectToYouTube(youtubeVideoId);
-                addKillPopupListener();
-            } else {
-                console.error("Video ID no encontrado.");
-            }
-
-            function getYouTubeVideoIdFromUrl(url) {
-                // Extraer el ID del video, ya sea de una URL de video regular o de una transmisión en vivo
-                var match = url.match(/(?:v=|\\/live\\/|\\/embed\\/|\\/v\\/|\\/.+\\/)([^&?/]+)/);
-                return match ? match[1] : null;
-            }
-
-            function redirectToYouTube(videoId) {
-                console.log('Redirigiendo a YouTube con ID:', videoId);
-                var desktopFallback = "https://youtube.com/watch?v=" + videoId,
-                    mobileFallback = "https://youtube.com/watch?v=" + videoId,
-                    app = "vnd.youtube://" + videoId;
-
-                if (isMobileDevice()) {
-                    console.log('Dispositivo móvil detectado, intentando abrir app...');
-                    window.location.href = app;
-                    window.setTimeout(function() {
-                        console.log('Fallback a versión web...');
-                        window.location.href = mobileFallback;
-                    }, 25);
-                } else {
-                    console.log('Dispositivo de escritorio, redirigiendo a versión web...');
-                    window.location.href = desktopFallback;
-                }
-            }
-
-            function isMobileDevice() {
-                var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                console.log('User Agent:', navigator.userAgent);
-                console.log('Es dispositivo móvil:', isMobile);
-                return isMobile;
-            }
-
-            function addKillPopupListener() {
-                window.addEventListener('pagehide', function() {
-                    window.removeEventListener('pagehide', arguments.callee);
-                });
-            }
-        })();
-    </script>
-</body>
-</html>
-  `;
-}
-
 function isYouTubeUrl(url: string): boolean {
   return url.includes('youtube.com') || url.includes('youtu.be');
 }
@@ -96,16 +30,14 @@ interface Link {
   custom_slug?: string;
   expires_at?: Date | null;
   is_private?: boolean;
+  title?: string;
 }
 
-interface Tag {
-  value: string;
-  label: string;
-}
 
 export default function Home() {
   // Estados para la creación del enlace
   const [originalUrl, setOriginalUrl] = useState('');
+  const [title, setTitle] = useState('');
   // Para múltiples scripts en creación, usamos un arreglo
   const [scripts, setScripts] = useState<{ name: string; code: string }[]>([]);
   // Estados para el nuevo script en el formulario de creación
@@ -127,12 +59,6 @@ export default function Home() {
 
   const [isYouTubeDeepLink, setIsYouTubeDeepLink] = useState(false);
 
-  const tagOptions = [
-    { value: 'personal', label: 'Personal' },
-    { value: 'trabajo', label: 'Trabajo' },
-    { value: 'social', label: 'Social' },
-    { value: 'proyecto', label: 'Proyecto' },
-  ];
 
   useEffect(() => {
     if (user) {
@@ -194,7 +120,7 @@ export default function Home() {
     try {
       const shortUrl = customSlug || generateShortUrl();
       let scriptCode = scripts;
-      
+
       // Si es una URL de YouTube y se seleccionó el deeplink, agregamos el indicador
       if (isYouTubeUrl(originalUrl) && isYouTubeDeepLink) {
         scriptCode = [...scripts, { name: 'YouTube Deep Link', code: 'true' }];
@@ -206,6 +132,7 @@ export default function Home() {
           short_url: shortUrl,
           script_code: scriptCode,
           description,
+          title,
           expires_at: expiresAt,
           is_private: false,
           user_id: user.id,
@@ -222,6 +149,7 @@ export default function Home() {
 
       // Limpiar campos
       setOriginalUrl('');
+      setTitle('');
       setScripts([]);
       setNewScriptName('');
       setNewScriptCode('');
@@ -319,6 +247,22 @@ export default function Home() {
           {/* Formulario de creación */}
           <div className="bg-white rounded-lg shadow-md p-6 md:p-8 mb-8">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Título */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                  Título del enlace
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Mi enlace importante"
+                  required
+                />
+              </div>
+
               {/* URL Original */}
               <div>
                 <label htmlFor="originalUrl" className="block text-sm font-medium text-gray-700 mb-2">
@@ -472,6 +416,22 @@ export default function Home() {
                   <li key={link.id} className="p-6">
                     {editingLink?.id === link.id ? (
                       <div className="space-y-4">
+                        {/* Título */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Título
+                          </label>
+                          <input
+                            type="text"
+                            value={editingLink.title}
+                            onChange={e => setEditingLink({
+                              ...editingLink,
+                              title: e.target.value
+                            })}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          />
+                        </div>
+
                         {/* Edición de URL Original */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700">
@@ -585,11 +545,19 @@ export default function Home() {
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
                             <h3 className="text-lg font-medium text-gray-900 truncate">
-                              {link.original_url}
+                              {link.title || 'Sin título'}
                             </h3>
                             <p className="mt-1 text-sm text-gray-500">
                               {window.location.origin}/{link.short_url}
                             </p>
+                            <a 
+                              href={link.original_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="mt-1 text-sm text-blue-600 hover:text-blue-800 break-all"
+                            >
+                              {link.original_url}
+                            </a>
                             {link.description && (
                               <p className="mt-1 text-sm text-gray-600">
                                 {link.description}
