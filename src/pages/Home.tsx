@@ -181,6 +181,7 @@ export default function Home() {
           description: link.description,
           expires_at: link.expires_at,
           is_private: true,
+          title: link.title
         })
         .eq('id', link.id)
         .eq('user_id', user.id);

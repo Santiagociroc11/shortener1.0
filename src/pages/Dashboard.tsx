@@ -114,11 +114,12 @@ export default function Dashboard() {
         .from('links')
         .update({
           original_url: link.original_url,
-          script_code: link.script_code, // Enviamos el arreglo actualizado
+          script_code: link.script_code,
           description: link.description,
           expires_at: link.expires_at,
           is_private: link.is_private,
           tags: link.tags,
+          title: link.title
         })
         .eq('id', link.id);
 
