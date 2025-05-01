@@ -3,33 +3,57 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 // Nota: Si no usas `toast` en este componente, puedes remover la importación de react-hot-toast.
 
-function getYouTubeVideoIdFromUrl(url: string): string | null {
-  const match = url.match(/(?:v=|\/live\/|\/embed\/|\/v\/|\/.+\/)([^&?/]+)/);
-  return match ? match[1] : null;
-}
+export function getYouTubeId(url: string): string | null {
+  try {
+    const u = new URL(url);
 
-function isMobileDevice(): boolean {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-function redirectToYouTube(videoId: string, originalUrl: string) {
-  console.log('Redirigiendo a YouTube con ID:', videoId);
-  const app = `vnd.youtube://${videoId}`;
-  const fallbackUrl = originalUrl;
-
-  if (isMobileDevice()) {
-    console.log('Dispositivo móvil detectado, intentando abrir app...');
-    window.location.href = app;
-    
-    // Fallback después de 2 segundos
-    setTimeout(() => {
-      console.log('Fallback a versión web...');
-      window.location.href = fallbackUrl;
-    }, 2000);
-  } else {
-    console.log('Dispositivo de escritorio, redirigiendo a versión web...');
-    window.location.href = fallbackUrl;
+    if (u.hostname === 'youtu.be') {
+      return u.pathname.slice(1);
+    }
+    if (u.searchParams.has('v')) {
+      return u.searchParams.get('v')!;
+    }
+    const m = u.pathname.match(/^\/(?:embed|v|live)\/([^/?]+)/);
+    return m ? m[1] : null;
+  } catch {
+    return null; // URL mal formada
   }
+}
+
+const PLATFORM = (() => {
+  const ua = navigator.userAgent;
+  return {
+    android: /Android/i.test(ua),
+    ios: /iPad|iPhone|iPod/i.test(ua)
+  };
+})();
+
+export function openYouTube(videoId: string, originalUrl: string) {
+  const androidIntent =
+    `intent://youtu.be/${videoId}` +
+    `#Intent;scheme=https;package=com.google.android.youtube;` +
+    `S.browser_fallback_url=${encodeURIComponent(originalUrl)};end`;
+
+  const iosScheme = `youtube://www.youtube.com/watch?v=${videoId}`;
+
+  const target = PLATFORM.android
+    ? androidIntent
+    : PLATFORM.ios
+    ? iosScheme
+    : originalUrl;
+
+  // Lanzamos la app
+  window.location.href = target;
+
+  // Cronómetro de seguridad
+  const timer = setTimeout(() => {
+    window.location.href = originalUrl;
+  }, 1500);
+
+  // Si el usuario salió de la página, cancelamos el fallback
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearTimeout(timer);
+  });
 }
 
 export default function Redirect() {
@@ -46,53 +70,6 @@ export default function Redirect() {
         </div>
       </div>
     `;
-  };
-
-  // Función para inyectar HTML completo y procesar los scripts
-  const injectHTML = (htmlString: string) => {
-    console.log('Inyectando HTML:', htmlString);
-    
-    // Si el HTML contiene una estructura completa (DOCTYPE, html, head, body)
-    if (htmlString.includes('<!DOCTYPE html>')) {
-      console.log('HTML completo detectado');
-      
-      // Extraer solo el contenido del script
-      const scriptMatch = htmlString.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
-      if (scriptMatch && scriptMatch[1]) {
-        console.log('Script encontrado:', scriptMatch[1]);
-        
-        // Crear un nuevo script
-        const script = document.createElement('script');
-        script.textContent = scriptMatch[1];
-        
-        // Agregar el script al documento
-        document.body.appendChild(script);
-        
-        // Remover el script después de ejecutarlo
-        setTimeout(() => {
-          document.body.removeChild(script);
-        }, 100);
-      }
-    } else {
-      console.log('Fragmento HTML detectado');
-      // Si es solo un fragmento de HTML, inyectarlo en el body
-      const container = document.createElement('div');
-      container.innerHTML = htmlString;
-      document.body.appendChild(container);
-
-      const scripts = container.getElementsByTagName('script');
-      const scriptsArray = Array.from(scripts);
-      
-      scriptsArray.forEach(oldScript => {
-        console.log('Procesando script:', oldScript.text);
-        const newScript = document.createElement('script');
-        Array.from(oldScript.attributes).forEach(attr => {
-          newScript.setAttribute(attr.name, attr.value);
-        });
-        newScript.text = oldScript.innerHTML;
-        oldScript.parentNode?.replaceChild(newScript, oldScript);
-      });
-    }
   };
 
   useEffect(() => {
@@ -145,9 +122,9 @@ export default function Redirect() {
           const youtubeDeepLink = data.script_code.find(script => script.name === 'YouTube Deep Link');
           if (youtubeDeepLink) {
             console.log('Deep Link de YouTube detectado');
-            const videoId = getYouTubeVideoIdFromUrl(data.original_url);
+            const videoId = getYouTubeId(data.original_url);
             if (videoId) {
-              redirectToYouTube(videoId, data.original_url);
+              openYouTube(videoId, data.original_url);
               return;
             }
           }
