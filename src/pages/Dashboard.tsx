@@ -23,6 +23,7 @@ interface Link {
   expires_at?: Date | null;
   tags?: string[];
   is_private?: boolean;
+  title?: string;
 }
 
 interface Tag {
@@ -302,11 +303,19 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <h2 className="text-lg font-medium text-gray-900 truncate">
-                        {link.original_url}
+                        {link.title || 'Sin título'}
                       </h2>
                       <p className="mt-1 text-sm text-gray-500">
                         {window.location.origin}/{link.short_url}
                       </p>
+                      <a 
+                        href={link.original_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="mt-1 text-sm text-blue-600 hover:text-blue-800 break-all"
+                      >
+                        {link.original_url}
+                      </a>
                       {link.description && (
                         <p className="mt-1 text-sm text-gray-600">{link.description}</p>
                       )}
