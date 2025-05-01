@@ -26,46 +26,55 @@ function generateYouTubeDeepLink(url: string): string {
 </head>
 <body>
     <script type="text/javascript">
-        window.onload = function() {
+        (function() {
             var youtubeVideoId = getYouTubeVideoIdFromUrl("${url}");
+            console.log('Video ID extraído:', youtubeVideoId);
+            
             if (youtubeVideoId) {
                 redirectToYouTube(youtubeVideoId);
                 addKillPopupListener();
             } else {
                 console.error("Video ID no encontrado.");
             }
-        };
 
-        function getYouTubeVideoIdFromUrl(url) {
-            // Extraer el ID del video, ya sea de una URL de video regular o de una transmisión en vivo
-            var match = url.match(/(?:v=|\\/live\\/|\\/embed\\/|\\/v\\/|\\/.+\\/)([^&?/]+)/);
-            return match ? match[1] : null;
-        }
-
-        function redirectToYouTube(videoId) {
-            var desktopFallback = "https://youtube.com/watch?v=" + videoId,
-                mobileFallback = "https://youtube.com/watch?v=" + videoId,
-                app = "vnd.youtube://" + videoId;
-
-            if (isMobileDevice()) {
-                window.location = app;
-                window.setTimeout(function() {
-                    window.location = mobileFallback;
-                }, 25);
-            } else {
-                window.location = desktopFallback;
+            function getYouTubeVideoIdFromUrl(url) {
+                // Extraer el ID del video, ya sea de una URL de video regular o de una transmisión en vivo
+                var match = url.match(/(?:v=|\\/live\\/|\\/embed\\/|\\/v\\/|\\/.+\\/)([^&?/]+)/);
+                return match ? match[1] : null;
             }
-        }
 
-        function isMobileDevice() {
-            return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        }
+            function redirectToYouTube(videoId) {
+                console.log('Redirigiendo a YouTube con ID:', videoId);
+                var desktopFallback = "https://youtube.com/watch?v=" + videoId,
+                    mobileFallback = "https://youtube.com/watch?v=" + videoId,
+                    app = "vnd.youtube://" + videoId;
 
-        function addKillPopupListener() {
-            window.addEventListener('pagehide', function() {
-                window.removeEventListener('pagehide', arguments.callee);
-            });
-        }
+                if (isMobileDevice()) {
+                    console.log('Dispositivo móvil detectado, intentando abrir app...');
+                    window.location.href = app;
+                    window.setTimeout(function() {
+                        console.log('Fallback a versión web...');
+                        window.location.href = mobileFallback;
+                    }, 25);
+                } else {
+                    console.log('Dispositivo de escritorio, redirigiendo a versión web...');
+                    window.location.href = desktopFallback;
+                }
+            }
+
+            function isMobileDevice() {
+                var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                console.log('User Agent:', navigator.userAgent);
+                console.log('Es dispositivo móvil:', isMobile);
+                return isMobile;
+            }
+
+            function addKillPopupListener() {
+                window.addEventListener('pagehide', function() {
+                    window.removeEventListener('pagehide', arguments.callee);
+                });
+            }
+        })();
     </script>
 </body>
 </html>
@@ -186,10 +195,9 @@ export default function Home() {
       const shortUrl = customSlug || generateShortUrl();
       let scriptCode = scripts;
       
-      // Si es una URL de YouTube y se seleccionó el deeplink, agregamos el script
+      // Si es una URL de YouTube y se seleccionó el deeplink, agregamos el indicador
       if (isYouTubeUrl(originalUrl) && isYouTubeDeepLink) {
-        const deepLinkScript = generateYouTubeDeepLink(originalUrl);
-        scriptCode = [...scripts, { name: 'YouTube Deep Link', code: deepLinkScript }];
+        scriptCode = [...scripts, { name: 'YouTube Deep Link', code: 'true' }];
       }
 
       const { error } = await supabase.from('links').insert([

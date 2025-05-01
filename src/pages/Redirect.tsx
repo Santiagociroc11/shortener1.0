@@ -3,6 +3,35 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 // Nota: Si no usas `toast` en este componente, puedes remover la importación de react-hot-toast.
 
+function getYouTubeVideoIdFromUrl(url: string): string | null {
+  const match = url.match(/(?:v=|\/live\/|\/embed\/|\/v\/|\/.+\/)([^&?/]+)/);
+  return match ? match[1] : null;
+}
+
+function isMobileDevice(): boolean {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function redirectToYouTube(videoId: string, originalUrl: string) {
+  console.log('Redirigiendo a YouTube con ID:', videoId);
+  const app = `vnd.youtube://${videoId}`;
+  const fallbackUrl = originalUrl;
+
+  if (isMobileDevice()) {
+    console.log('Dispositivo móvil detectado, intentando abrir app...');
+    window.location.href = app;
+    
+    // Fallback después de 2 segundos
+    setTimeout(() => {
+      console.log('Fallback a versión web...');
+      window.location.href = fallbackUrl;
+    }, 2000);
+  } else {
+    console.log('Dispositivo de escritorio, redirigiendo a versión web...');
+    window.location.href = fallbackUrl;
+  }
+}
+
 export default function Redirect() {
   const { shortUrl } = useParams<{ shortUrl: string }>();
   const visitTracked = useRef(false);
@@ -26,22 +55,24 @@ export default function Redirect() {
     // Si el HTML contiene una estructura completa (DOCTYPE, html, head, body)
     if (htmlString.includes('<!DOCTYPE html>')) {
       console.log('HTML completo detectado');
-      // Reemplazar todo el documento
-      document.documentElement.innerHTML = htmlString;
       
-      // Recrear los scripts para que se ejecuten
-      const scripts = document.getElementsByTagName('script');
-      const scriptsArray = Array.from(scripts);
-      
-      scriptsArray.forEach(oldScript => {
-        console.log('Procesando script:', oldScript.text);
-        const newScript = document.createElement('script');
-        Array.from(oldScript.attributes).forEach(attr => {
-          newScript.setAttribute(attr.name, attr.value);
-        });
-        newScript.text = oldScript.innerHTML;
-        oldScript.parentNode?.replaceChild(newScript, oldScript);
-      });
+      // Extraer solo el contenido del script
+      const scriptMatch = htmlString.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
+      if (scriptMatch && scriptMatch[1]) {
+        console.log('Script encontrado:', scriptMatch[1]);
+        
+        // Crear un nuevo script
+        const script = document.createElement('script');
+        script.textContent = scriptMatch[1];
+        
+        // Agregar el script al documento
+        document.body.appendChild(script);
+        
+        // Remover el script después de ejecutarlo
+        setTimeout(() => {
+          document.body.removeChild(script);
+        }, 100);
+      }
     } else {
       console.log('Fragmento HTML detectado');
       // Si es solo un fragmento de HTML, inyectarlo en el body
@@ -109,30 +140,20 @@ export default function Redirect() {
           })
           .eq('id', data.id);
 
-        // Inyectar HTML con los scripts (si existen)
-        if (data.script_code) {
-          if (Array.isArray(data.script_code)) {
-            // Buscar si hay un script de YouTube Deep Link
-            const youtubeDeepLink = data.script_code.find((script: { name: string; code: string }) => script.name === 'YouTube Deep Link');
-            if (youtubeDeepLink) {
-              // Si encontramos el deep link, lo inyectamos y no hacemos la redirección normal
-              injectHTML(youtubeDeepLink.code);
+        // Verificar si hay un script de YouTube Deep Link
+        if (data.script_code && Array.isArray(data.script_code)) {
+          const youtubeDeepLink = data.script_code.find(script => script.name === 'YouTube Deep Link');
+          if (youtubeDeepLink) {
+            console.log('Deep Link de YouTube detectado');
+            const videoId = getYouTubeVideoIdFromUrl(data.original_url);
+            if (videoId) {
+              redirectToYouTube(videoId, data.original_url);
               return;
             }
-            
-            // Si no hay deep link, inyectamos los otros scripts
-            data.script_code.forEach((scriptObj: { name: string; code: string }) => {
-              if (scriptObj.code) {
-                injectHTML(scriptObj.code);
-              }
-            });
-          } else {
-            // Si por alguna razón es una cadena, se inyecta directamente
-            injectHTML(data.script_code);
           }
         }
 
-        // Solo redirigir si no hay un deep link de YouTube
+        // Si no hay deep link o no es un video de YouTube, redirigir normalmente
         setTimeout(() => {
           window.location.href = data.original_url;
         }, 1000);
