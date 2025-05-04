@@ -54,18 +54,27 @@ export default function LinkStats() {
         const referrers: Record<string, number> = {};
         
         data.visits_history.forEach((visit: VisitData) => {
-          // Estadísticas de navegadores
-          const userAgent = visit.userAgent.toLowerCase();
-          let browser = 'Otro';
-          if (userAgent.includes('chrome')) browser = 'Chrome';
-          else if (userAgent.includes('firefox')) browser = 'Firefox';
-          else if (userAgent.includes('safari')) browser = 'Safari';
-          else if (userAgent.includes('edge')) browser = 'Edge';
-          browsers[browser] = (browsers[browser] || 0) + 1;
+          try {
+            // Verificar que tenemos datos válidos
+            if (!visit || typeof visit !== 'object') return;
+            
+            // Estadísticas de navegadores
+            if (visit.userAgent) {
+              const userAgent = visit.userAgent.toLowerCase();
+              let browser = 'Otro';
+              if (userAgent.includes('chrome')) browser = 'Chrome';
+              else if (userAgent.includes('firefox')) browser = 'Firefox';
+              else if (userAgent.includes('safari')) browser = 'Safari';
+              else if (userAgent.includes('edge')) browser = 'Edge';
+              browsers[browser] = (browsers[browser] || 0) + 1;
+            }
 
-          // Estadísticas de referrers
-          const referrer = visit.referrer || 'Directo';
-          referrers[referrer] = (referrers[referrer] || 0) + 1;
+            // Estadísticas de referrers
+            const referrer = visit.referrer || 'Directo';
+            referrers[referrer] = (referrers[referrer] || 0) + 1;
+          } catch (error) {
+            console.warn("Error al procesar visita:", error);
+          }
         });
 
         setBrowserStats(browsers);
@@ -84,8 +93,16 @@ export default function LinkStats() {
   // Agrupar visitas por día
   const visitsByDay: Record<string, number> = {};
   linkData?.visits_history.forEach((visit: VisitData) => {
-    const date = startOfDay(parseISO(visit.date)).toISOString().split("T")[0];
-    visitsByDay[date] = (visitsByDay[date] || 0) + 1;
+    try {
+      // Verificar que la fecha sea válida antes de procesarla
+      const visitDate = parseISO(visit.date);
+      if (!isNaN(visitDate.getTime())) {
+        const date = startOfDay(visitDate).toISOString().split("T")[0];
+        visitsByDay[date] = (visitsByDay[date] || 0) + 1;
+      }
+    } catch (error) {
+      console.warn("Fecha inválida en historial de visitas:", visit.date);
+    }
   });
 
   const sortedDays = Object.keys(visitsByDay).sort();
@@ -101,13 +118,27 @@ export default function LinkStats() {
   if (selectedDate) {
     linkData?.visits_history
       .filter((visit: VisitData) => {
-        const visitDate = parseISO(visit.date);
-        const visitDateStr = startOfDay(visitDate).toISOString().split("T")[0];
-        return visitDateStr === selectedDate;
+        try {
+          const visitDate = parseISO(visit.date);
+          if (!isNaN(visitDate.getTime())) {
+            const visitDateStr = startOfDay(visitDate).toISOString().split("T")[0];
+            return visitDateStr === selectedDate;
+          }
+          return false;
+        } catch (error) {
+          return false;
+        }
       })
       .forEach((visit: VisitData) => {
-        const hour = parseISO(visit.date).getHours();
-        visitsByHour[hour] = (visitsByHour[hour] || 0) + 1;
+        try {
+          const visitDate = parseISO(visit.date);
+          if (!isNaN(visitDate.getTime())) {
+            const hour = visitDate.getHours();
+            visitsByHour[hour] = (visitsByHour[hour] || 0) + 1;
+          }
+        } catch (error) {
+          console.warn("Error al procesar hora de visita:", visit.date);
+        }
       });
   }
 
@@ -159,7 +190,13 @@ export default function LinkStats() {
               <div>
                 <p className="text-sm text-gray-500">Creado:</p>
                 <p className="text-gray-900">
-                  {format(parseISO(linkData.created_at), 'dd/MM/yyyy HH:mm', { locale: es })}
+                  {(() => {
+                    try {
+                      return format(parseISO(linkData.created_at), 'dd/MM/yyyy HH:mm', { locale: es });
+                    } catch (error) {
+                      return 'Fecha desconocida';
+                    }
+                  })()}
                 </p>
               </div>
             </div>
@@ -180,7 +217,13 @@ export default function LinkStats() {
             <h2 className="text-lg font-semibold mb-4">Visitas por Día</h2>
             <Bar
               data={{
-                labels: sortedDays.map(date => format(parseISO(date), 'dd/MM/yyyy', { locale: es })),
+                labels: sortedDays.map(date => {
+                  try {
+                    return format(parseISO(date), 'dd/MM/yyyy', { locale: es });
+                  } catch (error) {
+                    return 'Fecha inválida';
+                  }
+                }),
                 datasets: [{
                   label: 'Visitas',
                   data: sortedDays.map(date => visitsByDay[date]),
@@ -264,7 +307,13 @@ export default function LinkStats() {
               >
                 {sortedDays.map(date => (
                   <option key={date} value={date}>
-                    {format(parseISO(date), 'dd/MM/yyyy', { locale: es })}
+                    {(() => {
+                      try {
+                        return format(parseISO(date), 'dd/MM/yyyy', { locale: es });
+                      } catch (error) {
+                        return 'Fecha inválida';
+                      }
+                    })()}
                   </option>
                 ))}
               </select>
