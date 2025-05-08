@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-// Nota: Si no usas `toast` en este componente, puedes remover la importación de react-hot-toast.
 
+// Extrae el ID de vídeo de distintas URLs de YouTube
 export function getYouTubeId(url: string): string | null {
   try {
     const u = new URL(url);
@@ -20,14 +20,16 @@ export function getYouTubeId(url: string): string | null {
   }
 }
 
+// Detecta plataforma móvil para deep linking en YouTube
 const PLATFORM = (() => {
   const ua = navigator.userAgent;
   return {
     android: /Android/i.test(ua),
-    ios: /iPad|iPhone|iPod/i.test(ua)
+    ios: /iPad|iPhone|iPod/i.test(ua),
   };
 })();
 
+// Intenta abrir la app de YouTube en iOS/Android o cae al navegador
 export function openYouTube(videoId: string, originalUrl: string) {
   const androidIntent =
     `intent://youtu.be/${videoId}` +
@@ -42,15 +44,12 @@ export function openYouTube(videoId: string, originalUrl: string) {
     ? iosScheme
     : originalUrl;
 
-  // Lanzamos la app
   window.location.href = target;
 
-  // Cronómetro de seguridad
+  // Fallback al navegador si no sale de la página
   const timer = setTimeout(() => {
     window.location.href = originalUrl;
   }, 1500);
-
-  // Si el usuario salió de la página, cancelamos el fallback
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) clearTimeout(timer);
   });
@@ -60,7 +59,7 @@ export default function Redirect() {
   const { shortUrl } = useParams<{ shortUrl: string }>();
   const visitTracked = useRef(false);
 
-  // Función para renderizar mensajes en pantalla
+  // Renderiza mensajes de estado o error en pantalla completa
   const renderMessage = (title: string, message: string) => {
     document.body.innerHTML = `
       <div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui;color:#374151;">
@@ -70,6 +69,23 @@ export default function Redirect() {
         </div>
       </div>
     `;
+  };
+
+  // Inyecta HTML completo y fuerza ejecución de <script>
+  const injectHTML = (htmlString: string) => {
+    const container = document.createElement('div');
+    container.innerHTML = htmlString;
+    document.body.appendChild(container);
+
+    const scripts = Array.from(container.getElementsByTagName('script'));
+    scripts.forEach(oldScript => {
+      const newScript = document.createElement('script');
+      Array.from(oldScript.attributes).forEach(attr => {
+        newScript.setAttribute(attr.name, attr.value);
+      });
+      newScript.text = oldScript.innerHTML;
+      oldScript.parentNode?.replaceChild(newScript, oldScript);
+    });
   };
 
   useEffect(() => {
@@ -84,11 +100,9 @@ export default function Redirect() {
           .eq('short_url', shortUrl)
           .single();
 
-        if (error || !data) {
-          throw new Error('Enlace no encontrado');
-        }
+        if (error || !data) throw new Error('Enlace no encontrado');
 
-        // Verificar si el enlace ha expirado
+        // Verificar expiración
         if (data.expires_at && new Date(data.expires_at) < new Date()) {
           renderMessage(
             'Este enlace ha expirado',
@@ -97,7 +111,7 @@ export default function Redirect() {
           return;
         }
 
-        // Registrar la visita
+        // Registrar visita
         const now = new Date();
         const localDate = now.toLocaleDateString('en-CA');
         const localTime = now.toTimeString().split(' ')[0];
@@ -117,20 +131,32 @@ export default function Redirect() {
           })
           .eq('id', data.id);
 
-        // Verificar si hay un script de YouTube Deep Link
+        // Manejo Deep Link para YouTube
         if (data.script_code && Array.isArray(data.script_code)) {
-          const youtubeDeepLink = data.script_code.find(script => script.name === 'YouTube Deep Link');
-          if (youtubeDeepLink) {
-            console.log('Deep Link de YouTube detectado');
-            const videoId = getYouTubeId(data.original_url);
-            if (videoId) {
-              openYouTube(videoId, data.original_url);
-              return;
-            }
+          const youtubeDeepLink = data.script_code.find(
+            script => script.name === 'YouTube Deep Link'
+          );
+          const videoId = getYouTubeId(data.original_url);
+          if (youtubeDeepLink && videoId) {
+            openYouTube(videoId, data.original_url);
+            return;
           }
         }
 
-        // Si no hay deep link o no es un video de YouTube, redirigir normalmente
+        // Inyección genérica de scripts (excluyendo Deep Link)
+        if (data.script_code) {
+          if (Array.isArray(data.script_code)) {
+            data.script_code.forEach(scriptObj => {
+              if (scriptObj.code && scriptObj.name !== 'YouTube Deep Link') {
+                injectHTML(scriptObj.code);
+              }
+            });
+          } else {
+            injectHTML(data.script_code);
+          }
+        }
+
+        // Redirección normal tras brevedad
         setTimeout(() => {
           window.location.href = data.original_url;
         }, 1000);
@@ -149,12 +175,8 @@ export default function Redirect() {
 
   return (
     <>
-      {/* Estilos para la animación del spinner */}
       <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       `}</style>
       <div style={{
         display: 'flex',
