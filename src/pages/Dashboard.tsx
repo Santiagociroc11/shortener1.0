@@ -404,7 +404,7 @@ export default function Dashboard() {
                       </button>
                     </div>
                   </div>
-                  {link.script_code && (
+                  {link.script_code?.length > 0 && (
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">Tiene script de seguimiento</p>
                     </div>
