@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { LinkService } from '../lib/linkService';
 
 // Extrae el ID de vídeo de YouTube
 export function getYouTubeId(url: string): string | null {
@@ -87,19 +87,17 @@ export default function Redirect() {
       console.log('[trackVisit] fetching data for shortUrl:', shortUrl);
 
       try {
-        const { data, error } = await supabase
-          .from('links')
-          .select('*')
-          .eq('short_url', shortUrl)
-          .single();
+        // Usar el servicio de caché
+        const data = await LinkService.getLinkData(shortUrl!);
 
-        if (error || !data) {
-          console.error('[trackVisit] error fetching link or data empty', error);
+        if (!data) {
+          console.error('[trackVisit] link not found');
           throw new Error('Enlace no encontrado');
         }
         console.log('[trackVisit] fetched link data:', data);
 
-        if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        // Verificar expiración
+        if (LinkService.isLinkExpired(data)) {
           renderMessage(
             'Este enlace ha expirado',
             'El enlace ya no está disponible porque ha superado su fecha de expiración.'
@@ -107,24 +105,25 @@ export default function Redirect() {
           return;
         }
 
-        // Registro de visita
+        // Registro de visita optimizado
         const now = new Date();
         const localDate = now.toLocaleDateString('en-CA');
         const localTime = now.toTimeString().split(' ')[0];
-        const visitData = { date: `${localDate}T${localTime}`, userAgent: navigator.userAgent, referrer: document.referrer || 'Direct' };
-        const updatedVisitsHistory = [...(data.visits_history || []), visitData];
+        const visitData = { 
+          date: `${localDate}T${localTime}`, 
+          userAgent: navigator.userAgent, 
+          referrer: document.referrer || 'Direct' 
+        };
         console.log('[trackVisit] visitData:', visitData);
 
-        await supabase
-          .from('links')
-          .update({ visits: (data.visits || 0) + 1, last_visited: new Date().toISOString(), visits_history: updatedVisitsHistory })
-          .eq('id', data.id);
+        // Registro rápido usando caché
+        await LinkService.recordVisit(shortUrl!, visitData);
         console.log('[trackVisit] visit registered');
 
         // Deep Link para YouTube?
         if (data.script_code && Array.isArray(data.script_code)) {
           console.log('[trackVisit] script_code array:', data.script_code);
-          const youtubeDeepLink = data.script_code.find(s => s.name === 'YouTube Deep Link');
+          const youtubeDeepLink = data.script_code.find((s: any) => s.name === 'YouTube Deep Link');
           if (youtubeDeepLink) console.log('[trackVisit] found YouTube Deep Link script');
           const videoId = getYouTubeId(data.original_url);
           console.log('[trackVisit] extracted videoId:', videoId);
@@ -138,7 +137,7 @@ export default function Redirect() {
         if (data.script_code) {
           console.log('[trackVisit] injecting generic scripts');
           if (Array.isArray(data.script_code)) {
-            data.script_code.forEach(scriptObj => {
+            data.script_code.forEach((scriptObj: any) => {
               console.log('[trackVisit] scriptObj:', scriptObj.name);
               if (scriptObj.code && scriptObj.name !== 'YouTube Deep Link') {
                 injectHTML(scriptObj.code);
