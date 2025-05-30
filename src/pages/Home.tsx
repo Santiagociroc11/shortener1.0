@@ -11,8 +11,41 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-function generateShortUrl() {
-  return Math.random().toString(36).substring(2, 8);
+// ✅ OPTIMIZACIÓN: Generador de URLs más robusto
+function generateShortUrl(): string {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  const timestamp = Date.now().toString(36); // Base36 del timestamp
+  const random = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  
+  // Combinar timestamp + random para mayor unicidad
+  return (timestamp + random).substring(0, 8);
+}
+
+// ✅ OPTIMIZACIÓN: Función para verificar y generar URL única
+async function generateUniqueShortUrl(maxRetries: number = 5): Promise<string> {
+  for (let i = 0; i < maxRetries; i++) {
+    const shortUrl = generateShortUrl();
+    
+    // Verificar si ya existe
+    const { data, error } = await supabase
+      .from('links')
+      .select('short_url')
+      .eq('short_url', shortUrl)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Error checking URL uniqueness:', error);
+      continue;
+    }
+    
+    if (!data) {
+      // URL única encontrada
+      return shortUrl;
+    }
+  }
+  
+  // Fallback: usar timestamp más largo si no se encuentra URL única
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
 }
 
 function isYouTubeUrl(url: string): boolean {
@@ -71,9 +104,10 @@ export default function Home() {
   const fetchLinks = async () => {
     if (!user) return;
 
+    // ✅ OPTIMIZACIÓN: Solo seleccionar campos necesarios para la vista
     const { data, error } = await supabase
       .from('links')
-      .select('*')
+      .select('id, original_url, short_url, visits, created_at, description, title, expires_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(5);
@@ -118,7 +152,7 @@ export default function Home() {
     }
 
     try {
-      const shortUrl = customSlug || generateShortUrl();
+      const shortUrl = customSlug || await generateUniqueShortUrl();
       let scriptCode = scripts;
 
       // Si es una URL de YouTube y se seleccionó el deeplink, agregamos el indicador

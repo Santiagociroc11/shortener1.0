@@ -45,9 +45,35 @@ export function openYouTube(videoId: string, originalUrl: string) {
   });
 }
 
+// ✅ OPTIMIZACIÓN 1: Cache en memoria para URLs repetidas
+const URL_CACHE = new Map<string, { url: string; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+// ✅ OPTIMIZACIÓN 2: Función de tracking asíncrono no-bloqueante
+async function trackVisitAsync(linkId: string, currentVisits: number) {
+  try {
+    const now = new Date();
+    const visitData = {
+      date: now.toISOString().split('T')[0] + 'T' + now.toTimeString().split(' ')[0],
+      userAgent: navigator.userAgent.substring(0, 200), // ✅ Limitar tamaño
+      referrer: (document.referrer || 'Direct').substring(0, 100) // ✅ Limitar tamaño
+    };
+
+    // ✅ Usar RPC para mejor rendimiento
+    await supabase.rpc('increment_visit_count', {
+      link_id: linkId,
+      visit_data: visitData
+    });
+  } catch (error) {
+    console.error('[trackVisitAsync] error:', error);
+    // ✅ Fallback silencioso - no afecta la experiencia del usuario
+  }
+}
+
 export default function Redirect() {
   const { shortUrl } = useParams<{ shortUrl: string }>();
   const visitTracked = useRef(false);
+  
   const renderMessage = (title: string, message: string) => {
     console.log('[renderMessage]', title, message);
     document.body.innerHTML = `
@@ -78,27 +104,39 @@ export default function Redirect() {
   };
 
   useEffect(() => {
-    const trackVisit = async () => {
-      if (visitTracked.current) {
-        console.log('[trackVisit] already tracked, abort');
+    const handleRedirect = async () => {
+      if (visitTracked.current || !shortUrl) {
+        console.log('[handleRedirect] already processed or no shortUrl');
         return;
       }
       visitTracked.current = true;
-      console.log('[trackVisit] fetching data for shortUrl:', shortUrl);
 
       try {
+        // ✅ OPTIMIZACIÓN 3: Verificar cache primero
+        const cached = URL_CACHE.get(shortUrl);
+        if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+          console.log('[handleRedirect] using cached URL:', cached.url);
+          window.location.href = cached.url;
+          return;
+        }
+
+        console.log('[handleRedirect] fetching data for shortUrl:', shortUrl);
+
+        // ✅ OPTIMIZACIÓN 4: Solo seleccionar campos necesarios
         const { data, error } = await supabase
           .from('links')
-          .select('*')
+          .select('id, original_url, script_code, visits, expires_at')
           .eq('short_url', shortUrl)
           .single();
 
         if (error || !data) {
-          console.error('[trackVisit] error fetching link or data empty', error);
+          console.error('[handleRedirect] error fetching link:', error);
           throw new Error('Enlace no encontrado');
         }
-        console.log('[trackVisit] fetched link data:', data);
 
+        console.log('[handleRedirect] fetched link data');
+
+        // ✅ Verificar expiración
         if (data.expires_at && new Date(data.expires_at) < new Date()) {
           renderMessage(
             'Este enlace ha expirado',
@@ -107,61 +145,45 @@ export default function Redirect() {
           return;
         }
 
-        // Registro de visita
-        const now = new Date();
-        const localDate = now.toLocaleDateString('en-CA');
-        const localTime = now.toTimeString().split(' ')[0];
-        const visitData = { date: `${localDate}T${localTime}`, userAgent: navigator.userAgent, referrer: document.referrer || 'Direct' };
-        const updatedVisitsHistory = [...(data.visits_history || []), visitData];
-        console.log('[trackVisit] visitData:', visitData);
+        // ✅ OPTIMIZACIÓN 5: Cachear la URL para futuras visitas
+        URL_CACHE.set(shortUrl, {
+          url: data.original_url,
+          timestamp: Date.now()
+        });
 
-        await supabase
-          .from('links')
-          .update({ visits: (data.visits || 0) + 1, last_visited: new Date().toISOString(), visits_history: updatedVisitsHistory })
-          .eq('id', data.id);
-        console.log('[trackVisit] visit registered');
+        // ✅ OPTIMIZACIÓN 6: Tracking asíncrono NO-BLOQUEANTE
+        trackVisitAsync(data.id, data.visits || 0); // No await - fire and forget
 
-        // Deep Link para YouTube?
+        // ✅ Deep Link para YouTube?
         if (data.script_code && Array.isArray(data.script_code)) {
-          console.log('[trackVisit] script_code array:', data.script_code);
           const youtubeDeepLink = data.script_code.find(s => s.name === 'YouTube Deep Link');
-          if (youtubeDeepLink) console.log('[trackVisit] found YouTube Deep Link script');
           const videoId = getYouTubeId(data.original_url);
-          console.log('[trackVisit] extracted videoId:', videoId);
           if (youtubeDeepLink && videoId) {
             openYouTube(videoId, data.original_url);
             return;
           }
         }
 
-        // Inyección genérica de scripts
-        if (data.script_code) {
-          console.log('[trackVisit] injecting generic scripts');
-          if (Array.isArray(data.script_code)) {
-            data.script_code.forEach(scriptObj => {
-              console.log('[trackVisit] scriptObj:', scriptObj.name);
-              if (scriptObj.code && scriptObj.name !== 'YouTube Deep Link') {
-                injectHTML(scriptObj.code);
-              }
-            });
-          } else {
-            injectHTML(data.script_code);
-          }
+        // ✅ Inyección de scripts (si es necesario)
+        if (data.script_code && Array.isArray(data.script_code)) {
+          data.script_code.forEach(scriptObj => {
+            if (scriptObj.code && scriptObj.name !== 'YouTube Deep Link') {
+              injectHTML(scriptObj.code);
+            }
+          });
         }
 
-        console.log('[trackVisit] redirecting to original URL in 1s');
-        setTimeout(() => {
-          console.log('[trackVisit] redirect now to:', data.original_url);
-          window.location.href = data.original_url;
-        }, 1000);
+        // ✅ OPTIMIZACIÓN 7: Redirección inmediata (sin timeout innecesario)
+        console.log('[handleRedirect] redirecting immediately to:', data.original_url);
+        window.location.href = data.original_url;
 
       } catch (err) {
-        console.error('[trackVisit] error:', err);
+        console.error('[handleRedirect] error:', err);
         renderMessage('Enlace no encontrado', 'El enlace que buscas no existe o ha sido eliminado.');
       }
     };
 
-    trackVisit();
+    handleRedirect();
   }, [shortUrl]);
 
   return (
