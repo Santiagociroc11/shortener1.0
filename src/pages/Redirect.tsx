@@ -49,20 +49,14 @@ export function openYouTube(videoId: string, originalUrl: string) {
 const URL_CACHE = new Map<string, { url: string; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
-// ✅ OPTIMIZACIÓN 2: Función de tracking asíncrono no-bloqueante
-async function trackVisitAsync(linkId: string, currentVisits: number) {
+// ✅ OPTIMIZACIÓN 2: Función de tracking asíncrono ULTRA-OPTIMIZADA
+async function trackVisitAsync(shortUrl: string) {
   try {
-    const now = new Date();
-    const visitData = {
-      date: now.toISOString().split('T')[0] + 'T' + now.toTimeString().split(' ')[0],
-      userAgent: navigator.userAgent.substring(0, 200), // ✅ Limitar tamaño
-      referrer: (document.referrer || 'Direct').substring(0, 100) // ✅ Limitar tamaño
-    };
-
-    // ✅ Usar RPC para mejor rendimiento
-    await supabase.rpc('increment_visit_count', {
-      link_id: linkId,
-      visit_data: visitData
+    // ✅ Nueva función RPC simple sin JSON pesado
+    await supabase.rpc('track_visit_simple', {
+      p_short_url: shortUrl,
+      p_user_agent: navigator.userAgent,
+      p_referrer: document.referrer || 'Direct'
     });
   } catch (error) {
     console.error('[trackVisitAsync] error:', error);
@@ -152,7 +146,7 @@ export default function Redirect() {
         });
 
         // ✅ OPTIMIZACIÓN 6: Tracking asíncrono NO-BLOQUEANTE
-        trackVisitAsync(data.id, data.visits || 0); // No await - fire and forget
+        trackVisitAsync(shortUrl); // No await - fire and forget
 
         // ✅ Deep Link para YouTube?
         if (data.script_code && Array.isArray(data.script_code)) {
