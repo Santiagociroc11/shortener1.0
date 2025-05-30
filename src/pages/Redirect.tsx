@@ -64,6 +64,33 @@ async function trackVisitAsync(shortUrl: string) {
   }
 }
 
+// ✅ NUEVO: Función para detectar cuándo los píxeles han terminado
+function waitForPixelsToLoad(): Promise<void> {
+  return new Promise((resolve) => {
+    let checkCount = 0;
+    const maxChecks = 15; // Máximo 1.5 segundos (15 * 100ms)
+    
+    const checkPixels = () => {
+      checkCount++;
+      
+      // Verificar si Facebook Pixel está disponible y ha disparado
+      const fbqExists = typeof (window as any).fbq !== 'undefined';
+      
+      // Si fbq existe o hemos esperado suficiente tiempo, continuar
+      if (fbqExists || checkCount >= maxChecks) {
+        console.log('[waitForPixelsToLoad] pixels ready or timeout reached');
+        resolve();
+        return;
+      }
+      
+      // Esperar un poco más
+      setTimeout(checkPixels, 100);
+    };
+    
+    checkPixels();
+  });
+}
+
 export default function Redirect() {
   const { shortUrl } = useParams<{ shortUrl: string }>();
   const visitTracked = useRef(false);
@@ -81,20 +108,43 @@ export default function Redirect() {
 
   const injectHTML = (htmlString: string) => {
     console.log('[injectHTML] HTML length:', htmlString.length);
-    const container = document.createElement('div');
-    container.innerHTML = htmlString;
-    document.body.appendChild(container);
+    
+    // ✅ MEJORADO: Ejecutar scripts de forma síncrona y más robusta
+    try {
+      const scriptElement = document.createElement('script');
+      scriptElement.type = 'text/javascript';
+      scriptElement.text = htmlString;
+      
+      // Agregar al head para mejor ejecución
+      document.head.appendChild(scriptElement);
+      console.log('[injectHTML] script executed successfully');
+      
+      // Remover después de ejecutar para limpiar el DOM
+      setTimeout(() => {
+        if (scriptElement.parentNode) {
+          scriptElement.parentNode.removeChild(scriptElement);
+        }
+      }, 100);
+      
+    } catch (error) {
+      console.error('[injectHTML] error executing script:', error);
+      
+      // Fallback: método original
+      const container = document.createElement('div');
+      container.innerHTML = htmlString;
+      document.body.appendChild(container);
 
-    const scripts = Array.from(container.getElementsByTagName('script'));
-    console.log('[injectHTML] found scripts count:', scripts.length);
-    scripts.forEach((oldScript, idx) => {
-      console.log(`[injectHTML] processing script #${idx}`);
-      const newScript = document.createElement('script');
-      Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-      newScript.text = oldScript.innerHTML;
-      oldScript.parentNode?.replaceChild(newScript, oldScript);
-      console.log(`[injectHTML] executed script #${idx}`);
-    });
+      const scripts = Array.from(container.getElementsByTagName('script'));
+      console.log('[injectHTML] fallback - found scripts count:', scripts.length);
+      scripts.forEach((oldScript, idx) => {
+        console.log(`[injectHTML] fallback - processing script #${idx}`);
+        const newScript = document.createElement('script');
+        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+        newScript.text = oldScript.innerHTML;
+        oldScript.parentNode?.replaceChild(newScript, oldScript);
+        console.log(`[injectHTML] fallback - executed script #${idx}`);
+      });
+    }
   };
 
   useEffect(() => {
@@ -160,15 +210,46 @@ export default function Redirect() {
 
         // ✅ Inyección de scripts (si es necesario)
         if (data.script_code && Array.isArray(data.script_code)) {
+          let hasScripts = false;
+          let hasFacebookPixel = false;
+          
           data.script_code.forEach(scriptObj => {
             if (scriptObj.code && scriptObj.name !== 'YouTube Deep Link') {
+              console.log('[handleRedirect] injecting script:', scriptObj.name);
               injectHTML(scriptObj.code);
+              hasScripts = true;
+              
+              // Detectar si es un píxel de Facebook
+              if (scriptObj.name.includes('Facebook Pixel')) {
+                hasFacebookPixel = true;
+              }
             }
           });
+
+          // ✅ CRÍTICO: Dar tiempo a los scripts para ejecutarse antes de redirección
+          if (hasScripts) {
+            console.log('[handleRedirect] waiting for scripts to execute...');
+            
+            if (hasFacebookPixel) {
+              // Espera inteligente para píxeles de Facebook
+              console.log('[handleRedirect] Facebook pixel detected, using smart wait...');
+              waitForPixelsToLoad().then(() => {
+                console.log('[handleRedirect] Facebook pixels loaded, redirecting to:', data.original_url);
+                window.location.href = data.original_url;
+              });
+            } else {
+              // Delay fijo para otros scripts
+              setTimeout(() => {
+                console.log('[handleRedirect] scripts executed, redirecting to:', data.original_url);
+                window.location.href = data.original_url;
+              }, 800); // Menor tiempo para scripts normales
+            }
+            return; // Salir aquí para evitar redirección inmediata
+          }
         }
 
-        // ✅ OPTIMIZACIÓN 7: Redirección inmediata (sin timeout innecesario)
-        console.log('[handleRedirect] redirecting immediately to:', data.original_url);
+        // ✅ Redirección inmediata solo si NO hay scripts
+        console.log('[handleRedirect] no scripts, redirecting immediately to:', data.original_url);
         window.location.href = data.original_url;
 
       } catch (err) {
