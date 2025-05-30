@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { BarChart, Pencil, Trash2, ExternalLink, QrCode, Calendar, Tag, Copy } from 'lucide-react';
+import { BarChart, Pencil, Trash2, ExternalLink, QrCode, Calendar, Tag, Copy, Link2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -48,6 +48,8 @@ export default function Dashboard() {
   // Estados para agregar un nuevo script en modo edición
   const [editingNewScriptName, setEditingNewScriptName] = useState('');
   const [editingNewScriptCode, setEditingNewScriptCode] = useState('');
+  // ✅ NUEVO: Estado para estadísticas rápidas de cada enlace
+  const [linkStats, setLinkStats] = useState<Record<string, any>>({});
 
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -66,14 +68,31 @@ export default function Dashboard() {
 
   const fetchLinks = async () => {
     try {
+      // ✅ OPTIMIZACIÓN: Solo seleccionar campos necesarios para el dashboard
       const { data, error } = await supabase
         .from('links')
-        .select('*')
+        .select('id, original_url, short_url, visits, created_at, description, title, expires_at, tags, is_private')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setLinks(data || []);
+
+      // ✅ NUEVO: Cargar estadísticas rápidas para los primeros 5 enlaces
+      if (data && data.length > 0) {
+        const topLinks = data.slice(0, 5); // Solo los 5 más recientes para rendimiento
+        const statsPromises = topLinks.map(async (link) => {
+          const stats = await fetchLinkQuickStats(link.short_url);
+          return { shortUrl: link.short_url, stats };
+        });
+
+        const statsResults = await Promise.all(statsPromises);
+        const statsMap: Record<string, any> = {};
+        statsResults.forEach(({ shortUrl, stats }) => {
+          if (stats) statsMap[shortUrl] = stats;
+        });
+        setLinkStats(statsMap);
+      }
     } catch (error) {
       toast.error('Error al obtener los enlaces');
     }
@@ -147,6 +166,35 @@ export default function Dashboard() {
     return matchesSearch && matchesTags;
   });
 
+  // ✅ NUEVA: Función para obtener estadísticas rápidas de un enlace
+  const fetchLinkQuickStats = async (shortUrl: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('visit_events')
+        .select('device_type, visited_at')
+        .eq('short_url', shortUrl)
+        .order('visited_at', { ascending: false })
+        .limit(50); // Solo últimos 50 para estadísticas rápidas
+
+      if (error) return null;
+
+      const events = data || [];
+      const mobileCount = events.filter(e => e.device_type === 'mobile').length;
+      const desktopCount = events.filter(e => e.device_type === 'desktop').length;
+      const recentEvents = events.slice(0, 5);
+
+      return {
+        mobile: mobileCount,
+        desktop: desktopCount,
+        recent: recentEvents.length,
+        lastVisit: events[0]?.visited_at || null
+      };
+    } catch (error) {
+      console.warn('Error obteniendo estadísticas rápidas:', error);
+      return null;
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Barra de búsqueda y filtros */}
@@ -175,6 +223,65 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Estadísticas rápidas del nuevo sistema */}
+      {links.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Link2 className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Total Enlaces</p>
+                <p className="text-2xl font-semibold text-gray-900">{links.length}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <BarChart className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Total Visitas</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {links.reduce((sum, link) => sum + (link.visits || 0), 0)}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Calendar className="h-8 w-8 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Enlaces Activos</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {links.filter(link => !link.expires_at || new Date(link.expires_at) > new Date()).length}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Tag className="h-8 w-8 text-orange-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Enlace Más Popular</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {Math.max(...links.map(link => link.visits || 0), 0)} visitas
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Lista de enlaces */}
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -353,7 +460,32 @@ export default function Dashboard() {
                       )}
                     </div>
                     <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-500">{link.visits} visitas</span>
+                      <div className="text-right">
+                        <span className="text-lg font-semibold text-gray-900">{link.visits}</span>
+                        <p className="text-sm text-gray-500">visitas totales</p>
+                        {/* ✅ NUEVO: Mostrar estadísticas reales del nuevo esquema */}
+                        {linkStats[link.short_url] ? (
+                          <div className="text-xs text-gray-600 flex items-center space-x-3 mt-1">
+                            <span className="flex items-center">
+                              📱 {linkStats[link.short_url].mobile}
+                            </span>
+                            <span className="flex items-center">
+                              💻 {linkStats[link.short_url].desktop}
+                            </span>
+                            <span className="flex items-center">
+                              🕒 {linkStats[link.short_url].recent}
+                            </span>
+                          </div>
+                        ) : link.visits > 0 ? (
+                          <div className="text-xs text-gray-400 mt-1">
+                            <span>📊 Ver estadísticas →</span>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400 mt-1">
+                            <span>🆕 Sin visitas aún</span>
+                          </div>
+                        )}
+                      </div>
                       <button
                         onClick={() => navigate(`/link/${link.short_url}`)}
                         className="text-blue-500 hover:text-blue-700 flex items-center"
