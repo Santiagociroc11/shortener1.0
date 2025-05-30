@@ -45,10 +45,6 @@ export function openYouTube(videoId: string, originalUrl: string) {
   });
 }
 
-// ✅ OPTIMIZACIÓN 1: Cache en memoria para URLs repetidas
-const URL_CACHE = new Map<string, { url: string; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
-
 // ✅ OPTIMIZACIÓN 2: Función de tracking asíncrono ULTRA-OPTIMIZADA
 async function trackVisitAsync(shortUrl: string) {
   try {
@@ -59,63 +55,26 @@ async function trackVisitAsync(shortUrl: string) {
       p_referrer: document.referrer || 'Direct'
     });
   } catch (error) {
-    console.error('[trackVisitAsync] error:', error);
+    // ✅ Logging solo en desarrollo
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[trackVisitAsync] error:', error);
+    }
     // ✅ Fallback silencioso - no afecta la experiencia del usuario
   }
 }
 
-// ✅ NUEVO: Función para detectar cuándo los píxeles han terminado
-function waitForPixelsToLoad(): Promise<void> {
-  return new Promise((resolve) => {
-    let checkCount = 0;
-    const maxChecks = 20; // 2 segundos (20 * 100ms)
-    let pixelExecuted = false;
-    
-    console.log('[waitForPixelsToLoad] 🎯 Iniciando verificación de Facebook Pixel...');
-    
-    const checkPixels = () => {
-      checkCount++;
-      
-      // Verificar si Facebook Pixel está disponible
-      const fbqExists = typeof (window as any).fbq !== 'undefined';
-      
-      if (fbqExists && !pixelExecuted) {
-        console.log('[waitForPixelsToLoad] ✅ Facebook Pixel detectado y ejecutándose...');
-        pixelExecuted = true;
-        
-        // Dar un poco más de tiempo para que el evento se dispare
-        setTimeout(() => {
-          console.log('[waitForPixelsToLoad] ✅ Facebook Pixel EJECUTADO correctamente');
-          resolve();
-        }, 300);
-        return;
-      }
-      
-      // Si hemos esperado suficiente tiempo
-      if (checkCount >= maxChecks) {
-        if (pixelExecuted) {
-          console.log('[waitForPixelsToLoad] ✅ Facebook Pixel EJECUTADO correctamente (timeout alcanzado)');
-        } else {
-          console.log('[waitForPixelsToLoad] ❌ Facebook Pixel NO SE EJECUTÓ (timeout alcanzado)');
-        }
-        resolve();
-        return;
-      }
-      
-      // Esperar un poco más
-      setTimeout(checkPixels, 100);
-    };
-    
-    checkPixels();
-  });
-}
+// ✅ OPTIMIZACIÓN EXTRA: Cache mejorado con información de scripts
+const URL_CACHE = new Map<string, { url: string; timestamp: number; hasScripts: boolean }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 export default function Redirect() {
   const { shortUrl } = useParams<{ shortUrl: string }>();
   const visitTracked = useRef(false);
   
   const renderMessage = (title: string, message: string) => {
-    console.log('[renderMessage]', title, message);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[renderMessage]', title, message);
+    }
     document.body.innerHTML = `
       <div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:system-ui;color:#374151;">
         <div style="text-align:center;">
@@ -126,46 +85,48 @@ export default function Redirect() {
   };
 
   const injectHTML = (htmlString: string) => {
-    console.log('[injectHTML] 📝 Inyectando script - longitud:', htmlString.length);
-    
-    // ✅ MEJORADO: Ejecutar scripts de forma síncrona y más robusta
-    try {
-      const scriptElement = document.createElement('script');
-      scriptElement.type = 'text/javascript';
-      scriptElement.text = htmlString;
-      
-      // Agregar al head para mejor ejecución
-      document.head.appendChild(scriptElement);
-      console.log('[injectHTML] ✅ Script inyectado exitosamente en <head>');
-      
-      // Remover después de ejecutar para limpiar el DOM
-      setTimeout(() => {
-        if (scriptElement.parentNode) {
-          scriptElement.parentNode.removeChild(scriptElement);
-          console.log('[injectHTML] 🧹 Script removido del DOM para limpieza');
-        }
-      }, 100);
-      
-    } catch (error) {
-      console.error('[injectHTML] ❌ Error ejecutando script:', error);
-      
-      // Fallback: método original
-      console.log('[injectHTML] 🔄 Usando método fallback...');
-      const container = document.createElement('div');
-      container.innerHTML = htmlString;
-      document.body.appendChild(container);
-
-      const scripts = Array.from(container.getElementsByTagName('script'));
-      console.log('[injectHTML] 📋 Fallback - scripts encontrados:', scripts.length);
-      scripts.forEach((oldScript, idx) => {
-        console.log(`[injectHTML] 🔧 Fallback - procesando script #${idx + 1}`);
-        const newScript = document.createElement('script');
-        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-        newScript.text = oldScript.innerHTML;
-        oldScript.parentNode?.replaceChild(newScript, oldScript);
-        console.log(`[injectHTML] ✅ Fallback - ejecutado script #${idx + 1}`);
-      });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[injectHTML] HTML length:', htmlString.length);
     }
+    const container = document.createElement('div');
+    container.innerHTML = htmlString;
+    document.body.appendChild(container);
+
+    const scripts = Array.from(container.getElementsByTagName('script'));
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[injectHTML] found scripts count:', scripts.length);
+    }
+    
+    let scriptsExecuted = 0;
+    scripts.forEach((oldScript, idx) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[injectHTML] processing script #${idx}:`, oldScript.innerHTML.substring(0, 100));
+      }
+      const newScript = document.createElement('script');
+      Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+      newScript.text = oldScript.innerHTML;
+      
+      // Añadir un callback para confirmar ejecución
+      newScript.onload = () => {
+        scriptsExecuted++;
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[injectHTML] script #${idx} executed successfully`);
+        }
+      };
+      
+      newScript.onerror = (error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`[injectHTML] script #${idx} failed:`, error);
+        }
+      };
+      
+      oldScript.parentNode?.replaceChild(newScript, oldScript);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[injectHTML] script #${idx} injected`);
+      }
+    });
+    
+    return scripts.length;
   };
 
   useEffect(() => {
@@ -177,15 +138,25 @@ export default function Redirect() {
       visitTracked.current = true;
 
       try {
-        // ✅ OPTIMIZACIÓN 3: Verificar cache primero
+        // ✅ OPTIMIZACIÓN 3: Verificar cache primero, ahora más inteligente
         const cached = URL_CACHE.get(shortUrl);
         if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
-          console.log('[handleRedirect] using cached URL:', cached.url);
-          window.location.href = cached.url;
-          return;
+          if (!cached.hasScripts) {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[handleRedirect] using cached URL (no scripts):', cached.url);
+            }
+            window.location.href = cached.url;
+            return;
+          } else {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[handleRedirect] cache hit but has scripts - proceeding with full flow');
+            }
+          }
         }
 
-        console.log('[handleRedirect] fetching data for shortUrl:', shortUrl);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[handleRedirect] fetching data for shortUrl:', shortUrl);
+        }
 
         // ✅ OPTIMIZACIÓN 4: Solo seleccionar campos necesarios
         const { data, error } = await supabase
@@ -210,10 +181,11 @@ export default function Redirect() {
           return;
         }
 
-        // ✅ OPTIMIZACIÓN 5: Cachear la URL para futuras visitas
+        // ✅ OPTIMIZACIÓN 5: Cachear la URL para futuras visitas con info de scripts
         URL_CACHE.set(shortUrl, {
           url: data.original_url,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          hasScripts: data.script_code && Array.isArray(data.script_code) && data.script_code.length > 0
         });
 
         // ✅ OPTIMIZACIÓN 6: Tracking asíncrono NO-BLOQUEANTE
@@ -230,52 +202,27 @@ export default function Redirect() {
         }
 
         // ✅ Inyección de scripts (si es necesario)
+        let totalScripts = 0;
         if (data.script_code && Array.isArray(data.script_code)) {
-          let hasScripts = false;
-          let hasFacebookPixel = false;
-          
-          console.log('[handleRedirect] 📋 Scripts encontrados:', data.script_code.length);
-          
-          data.script_code.forEach((scriptObj, index) => {
+          console.log('[handleRedirect] injecting generic scripts');
+          data.script_code.forEach(scriptObj => {
+            console.log('[handleRedirect] processing script:', scriptObj.name);
             if (scriptObj.code && scriptObj.name !== 'YouTube Deep Link') {
-              console.log(`[handleRedirect] 🚀 Inyectando script ${index + 1}: "${scriptObj.name}"`);
-              injectHTML(scriptObj.code);
-              hasScripts = true;
-              
-              // Detectar si es un píxel de Facebook
-              if (scriptObj.name.includes('Facebook Pixel')) {
-                hasFacebookPixel = true;
-                console.log('[handleRedirect] 📊 DETECTADO: Script de Facebook Pixel');
-              }
+              const scriptCount = injectHTML(scriptObj.code);
+              totalScripts += scriptCount;
             }
           });
-
-          // ✅ CRÍTICO: Dar tiempo a los scripts para ejecutarse antes de redirección
-          if (hasScripts) {
-            console.log('[handleRedirect] ⏳ Esperando que los scripts se ejecuten...');
-            
-            if (hasFacebookPixel) {
-              // Espera inteligente para píxeles de Facebook
-              console.log('[handleRedirect] 📊 Facebook Pixel detectado, usando espera inteligente...');
-              waitForPixelsToLoad().then(() => {
-                console.log('[handleRedirect] 🚀 Redirigiendo después de Facebook Pixel a:', data.original_url);
-                window.location.href = data.original_url;
-              });
-            } else {
-              // Delay fijo para otros scripts
-              console.log('[handleRedirect] ⚙️ Scripts normales detectados, esperando 2 segundos...');
-              setTimeout(() => {
-                console.log('[handleRedirect] ✅ Scripts ejecutados, redirigiendo a:', data.original_url);
-                window.location.href = data.original_url;
-              }, 2000); // 2 segundos para scripts normales
-            }
-            return; // Salir aquí para evitar redirección inmediata
-          }
         }
 
-        // ✅ Redirección inmediata solo si NO hay scripts
-        console.log('[handleRedirect] no scripts, redirecting immediately to:', data.original_url);
-        window.location.href = data.original_url;
+        // ✅ RESTAURADO: Dar tiempo a los scripts para ejecutarse antes de redirigir
+        // Más tiempo si hay scripts complejos
+        const redirectDelay = totalScripts > 0 ? Math.max(1000, totalScripts * 500) : 1000;
+        console.log(`[handleRedirect] redirecting to original URL in ${redirectDelay}ms (${totalScripts} scripts detected)`);
+        
+        setTimeout(() => {
+          console.log('[handleRedirect] redirect now to:', data.original_url);
+          window.location.href = data.original_url;
+        }, redirectDelay);
 
       } catch (err) {
         console.error('[handleRedirect] error:', err);

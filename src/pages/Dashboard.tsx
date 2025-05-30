@@ -71,7 +71,7 @@ export default function Dashboard() {
       // ✅ OPTIMIZACIÓN: Solo seleccionar campos necesarios para el dashboard
       const { data, error } = await supabase
         .from('links')
-        .select('id, original_url, short_url, visits, created_at, description, title, expires_at, tags, is_private')
+        .select('id, original_url, short_url, visits, created_at, description, title, expires_at, tags, is_private, script_code')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 

@@ -74,7 +74,7 @@ export default function LinkStats() {
 
         if (eventsError) {
           console.warn("Error al obtener eventos:", eventsError);
-        }
+          }
 
         setLinkData(linkInfo);
         setStatsData(stats?.[0] || null);
