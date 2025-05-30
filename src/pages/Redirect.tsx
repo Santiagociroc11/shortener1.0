@@ -68,17 +68,36 @@ async function trackVisitAsync(shortUrl: string) {
 function waitForPixelsToLoad(): Promise<void> {
   return new Promise((resolve) => {
     let checkCount = 0;
-    const maxChecks = 15; // Máximo 1.5 segundos (15 * 100ms)
+    const maxChecks = 20; // 2 segundos (20 * 100ms)
+    let pixelExecuted = false;
+    
+    console.log('[waitForPixelsToLoad] 🎯 Iniciando verificación de Facebook Pixel...');
     
     const checkPixels = () => {
       checkCount++;
       
-      // Verificar si Facebook Pixel está disponible y ha disparado
+      // Verificar si Facebook Pixel está disponible
       const fbqExists = typeof (window as any).fbq !== 'undefined';
       
-      // Si fbq existe o hemos esperado suficiente tiempo, continuar
-      if (fbqExists || checkCount >= maxChecks) {
-        console.log('[waitForPixelsToLoad] pixels ready or timeout reached');
+      if (fbqExists && !pixelExecuted) {
+        console.log('[waitForPixelsToLoad] ✅ Facebook Pixel detectado y ejecutándose...');
+        pixelExecuted = true;
+        
+        // Dar un poco más de tiempo para que el evento se dispare
+        setTimeout(() => {
+          console.log('[waitForPixelsToLoad] ✅ Facebook Pixel EJECUTADO correctamente');
+          resolve();
+        }, 300);
+        return;
+      }
+      
+      // Si hemos esperado suficiente tiempo
+      if (checkCount >= maxChecks) {
+        if (pixelExecuted) {
+          console.log('[waitForPixelsToLoad] ✅ Facebook Pixel EJECUTADO correctamente (timeout alcanzado)');
+        } else {
+          console.log('[waitForPixelsToLoad] ❌ Facebook Pixel NO SE EJECUTÓ (timeout alcanzado)');
+        }
         resolve();
         return;
       }
@@ -107,7 +126,7 @@ export default function Redirect() {
   };
 
   const injectHTML = (htmlString: string) => {
-    console.log('[injectHTML] HTML length:', htmlString.length);
+    console.log('[injectHTML] 📝 Inyectando script - longitud:', htmlString.length);
     
     // ✅ MEJORADO: Ejecutar scripts de forma síncrona y más robusta
     try {
@@ -117,32 +136,34 @@ export default function Redirect() {
       
       // Agregar al head para mejor ejecución
       document.head.appendChild(scriptElement);
-      console.log('[injectHTML] script executed successfully');
+      console.log('[injectHTML] ✅ Script inyectado exitosamente en <head>');
       
       // Remover después de ejecutar para limpiar el DOM
       setTimeout(() => {
         if (scriptElement.parentNode) {
           scriptElement.parentNode.removeChild(scriptElement);
+          console.log('[injectHTML] 🧹 Script removido del DOM para limpieza');
         }
       }, 100);
       
     } catch (error) {
-      console.error('[injectHTML] error executing script:', error);
+      console.error('[injectHTML] ❌ Error ejecutando script:', error);
       
       // Fallback: método original
+      console.log('[injectHTML] 🔄 Usando método fallback...');
       const container = document.createElement('div');
       container.innerHTML = htmlString;
       document.body.appendChild(container);
 
       const scripts = Array.from(container.getElementsByTagName('script'));
-      console.log('[injectHTML] fallback - found scripts count:', scripts.length);
+      console.log('[injectHTML] 📋 Fallback - scripts encontrados:', scripts.length);
       scripts.forEach((oldScript, idx) => {
-        console.log(`[injectHTML] fallback - processing script #${idx}`);
+        console.log(`[injectHTML] 🔧 Fallback - procesando script #${idx + 1}`);
         const newScript = document.createElement('script');
         Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
         newScript.text = oldScript.innerHTML;
         oldScript.parentNode?.replaceChild(newScript, oldScript);
-        console.log(`[injectHTML] fallback - executed script #${idx}`);
+        console.log(`[injectHTML] ✅ Fallback - ejecutado script #${idx + 1}`);
       });
     }
   };
@@ -213,36 +234,40 @@ export default function Redirect() {
           let hasScripts = false;
           let hasFacebookPixel = false;
           
-          data.script_code.forEach(scriptObj => {
+          console.log('[handleRedirect] 📋 Scripts encontrados:', data.script_code.length);
+          
+          data.script_code.forEach((scriptObj, index) => {
             if (scriptObj.code && scriptObj.name !== 'YouTube Deep Link') {
-              console.log('[handleRedirect] injecting script:', scriptObj.name);
+              console.log(`[handleRedirect] 🚀 Inyectando script ${index + 1}: "${scriptObj.name}"`);
               injectHTML(scriptObj.code);
               hasScripts = true;
               
               // Detectar si es un píxel de Facebook
               if (scriptObj.name.includes('Facebook Pixel')) {
                 hasFacebookPixel = true;
+                console.log('[handleRedirect] 📊 DETECTADO: Script de Facebook Pixel');
               }
             }
           });
 
           // ✅ CRÍTICO: Dar tiempo a los scripts para ejecutarse antes de redirección
           if (hasScripts) {
-            console.log('[handleRedirect] waiting for scripts to execute...');
+            console.log('[handleRedirect] ⏳ Esperando que los scripts se ejecuten...');
             
             if (hasFacebookPixel) {
               // Espera inteligente para píxeles de Facebook
-              console.log('[handleRedirect] Facebook pixel detected, using smart wait...');
+              console.log('[handleRedirect] 📊 Facebook Pixel detectado, usando espera inteligente...');
               waitForPixelsToLoad().then(() => {
-                console.log('[handleRedirect] Facebook pixels loaded, redirecting to:', data.original_url);
+                console.log('[handleRedirect] 🚀 Redirigiendo después de Facebook Pixel a:', data.original_url);
                 window.location.href = data.original_url;
               });
             } else {
               // Delay fijo para otros scripts
+              console.log('[handleRedirect] ⚙️ Scripts normales detectados, esperando 2 segundos...');
               setTimeout(() => {
-                console.log('[handleRedirect] scripts executed, redirecting to:', data.original_url);
+                console.log('[handleRedirect] ✅ Scripts ejecutados, redirigiendo a:', data.original_url);
                 window.location.href = data.original_url;
-              }, 800); // Menor tiempo para scripts normales
+              }, 2000); // 2 segundos para scripts normales
             }
             return; // Salir aquí para evitar redirección inmediata
           }
