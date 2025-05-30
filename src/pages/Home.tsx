@@ -98,6 +98,21 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
+  // Estados para el generador de Facebook Pixel
+  const [showFbPixelGenerator, setShowFbPixelGenerator] = useState(false);
+  const [fbPixelId, setFbPixelId] = useState('');
+  const [productoId, setProductoId] = useState('');
+  const [precio, setPrecio] = useState('');
+  const [usd, setUsd] = useState('4100'); // valor por defecto
+  const [diasCookie, setDiasCookie] = useState('20'); // valor por defecto
+
+  // Estados para el sistema de generadores múltiples
+  const [showScriptGenerators, setShowScriptGenerators] = useState(false);
+  const [selectedGenerator, setSelectedGenerator] = useState<string | null>(null);
+  
+  // Estados para FB Pixel PageView (solo tracking)
+  const [fbPixelIdPageView, setFbPixelIdPageView] = useState('');
+
   useEffect(() => {
     if (user) {
       fetchLinks();
@@ -140,6 +155,170 @@ export default function Home() {
   const handleRemoveScript = (index: number) => {
     const updatedScripts = scripts.filter((_, i) => i !== index);
     setScripts(updatedScripts);
+  };
+
+  // Función para generar el script de Facebook Pixel
+  const generateFacebookPixelScript = () => {
+    if (!fbPixelId || !productoId || !precio || !usd) {
+      toast.error('Por favor completa todos los campos del Facebook Pixel');
+      return;
+    }
+
+    const script = `<script>
+(async function() {
+  "use strict";
+
+  const idPIXEL = "${fbPixelId}";
+  const productoId = "${productoId}";
+  const precio = ${precio};
+  const usd = ${usd};
+
+//__________________________________________________________
+
+  const diasCookie = ${diasCookie};
+  const precioUsd = precio / usd;
+
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.async = true;
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error(\`Error loading script: \${src}\`));
+    document.head.appendChild(s);
+  });
+
+  const initializeFbq = () => {
+    if (!window.fbq) {
+      window.fbq = (...args) =>
+        window.fbq.callMethod ? window.fbq.callMethod(...args) : window.fbq.queue.push(args);
+      window.fbq.queue = [];
+      window.fbq.loaded = true;
+      window.fbq.version = "2.0";
+    }
+  };
+
+  const ensureFbq = async () => {
+    initializeFbq();
+    if (!window.fbq.callMethod) {
+      try {
+        await loadScript("https://connect.facebook.net/en_US/fbevents.js");
+      } catch (error) {
+        console.error("fbq script load error:", error);
+      }
+    }
+  };
+
+  const setCookie = (name, value, days) => {
+    const expires = days ? \`; expires=\${new Date(Date.now() + days * 86400000).toUTCString()}\` : "";
+    document.cookie = \`\${encodeURIComponent(name)}=\${encodeURIComponent(value)}\${expires}; path=/\`;
+  };
+
+  const getCookie = (name) => {
+    const nameEQ = encodeURIComponent(name) + "=";
+    return document.cookie.split(";").reduce((found, cookie) => {
+      cookie = cookie.trim();
+      return cookie.indexOf(nameEQ) === 0 ? decodeURIComponent(cookie.substring(nameEQ.length)) : found;
+    }, null);
+  };
+
+  const triggerPurchaseEvent = () => {
+    if (getCookie(productoId)) return;
+    try {
+      fbq("track", "Purchase", { value: precioUsd, currency: "USD" });
+      setCookie(productoId, "true", diasCookie);
+    } catch (error) {
+      console.error("Purchase event error:", error);
+    }
+  };
+
+  await ensureFbq();
+  try {
+    fbq("init", idPIXEL);
+    fbq("track", "PageView");
+  } catch (error) {
+    console.error("fbq init error:", error);
+  }
+  triggerPurchaseEvent();
+})();
+</script>`;
+
+    // Añadir el script generado a la lista
+    const scriptName = `FB Pixel - ${productoId}`;
+    setScripts([...scripts, { name: scriptName, code: script }]);
+    
+    // Limpiar campos del generador
+    setFbPixelId('');
+    setProductoId('');
+    setPrecio('');
+    setUsd('4100');
+    setDiasCookie('20');
+    setShowFbPixelGenerator(false);
+    
+    toast.success('¡Script de Facebook Pixel generado y añadido!');
+  };
+
+  // Función para generar script de Facebook Pixel PageView (solo tracking)
+  const generateFacebookPixelPageView = () => {
+    if (!fbPixelIdPageView) {
+      toast.error('Por favor ingresa el ID del Pixel');
+      return;
+    }
+
+    const script = `<script>
+(async function() {
+  "use strict";
+
+  const idPIXEL = "${fbPixelIdPageView}";
+
+  const loadScript = (src) => new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.async = true;
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error(\`Error loading script: \${src}\`));
+    document.head.appendChild(s);
+  });
+
+  const initializeFbq = () => {
+    if (!window.fbq) {
+      window.fbq = (...args) =>
+        window.fbq.callMethod ? window.fbq.callMethod(...args) : window.fbq.queue.push(args);
+      window.fbq.queue = [];
+      window.fbq.loaded = true;
+      window.fbq.version = "2.0";
+    }
+  };
+
+  const ensureFbq = async () => {
+    initializeFbq();
+    if (!window.fbq.callMethod) {
+      try {
+        await loadScript("https://connect.facebook.net/en_US/fbevents.js");
+      } catch (error) {
+        console.error("fbq script load error:", error);
+      }
+    }
+  };
+
+  await ensureFbq();
+  try {
+    fbq("init", idPIXEL);
+    fbq("track", "PageView");
+  } catch (error) {
+    console.error("fbq init error:", error);
+  }
+})();
+</script>`;
+
+    // Añadir el script generado a la lista
+    const scriptName = `FB Pixel PageView - ${fbPixelIdPageView.substring(0, 8)}...`;
+    setScripts([...scripts, { name: scriptName, code: script }]);
+    
+    // Limpiar campos y cerrar
+    setFbPixelIdPageView('');
+    setSelectedGenerator(null);
+    
+    toast.success('¡Script de Facebook Pixel PageView generado!');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -295,6 +474,22 @@ export default function Home() {
   };
 
   const urlValidation = isValidUrl(originalUrl);
+
+  // Lista de generadores disponibles
+  const scriptGenerators = [
+    {
+      id: 'fb-pixel-product',
+      name: 'FB Pixel - Producto (PageView + Purchase)',
+      description: 'Tracking completo con evento de compra para productos',
+      icon: '🛒'
+    },
+    {
+      id: 'fb-pixel-pageview',
+      name: 'FB Pixel - Solo PageView',
+      description: 'Tracking básico sin eventos de compra',
+      icon: '👁️'
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-white">
@@ -498,9 +693,198 @@ export default function Home() {
                     <h3 className="text-gray-900 font-semibold mb-4 flex items-center">
                       Scripts de Seguimiento
                     </h3>
-                    
-                    {scripts.length > 0 && (
-                      <div className="space-y-4 mb-6">
+
+                    {/* Sistema de generadores múltiples */}
+                    <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                            <span className="text-white text-sm font-bold">⚡</span>
+                          </div>
+                          <div>
+                            <h4 className="text-gray-900 font-medium">Generadores de Scripts</h4>
+                            <p className="text-blue-700 text-sm">Crea scripts automáticamente sin programar</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowScriptGenerators(!showScriptGenerators);
+                            setSelectedGenerator(null);
+                          }}
+                          className="btn-secondary text-sm px-4 py-2"
+                        >
+                          {showScriptGenerators ? 'Cerrar' : '⚡ Generar Scripts'}
+                        </button>
+                      </div>
+
+                      {showScriptGenerators && !selectedGenerator && (
+                        <div className="space-y-3">
+                          <p className="text-gray-700 text-sm mb-4">Selecciona el tipo de script que necesitas:</p>
+                          <div className="grid gap-3">
+                            {scriptGenerators.map((generator) => (
+                              <button
+                                key={generator.id}
+                                type="button"
+                                onClick={() => setSelectedGenerator(generator.id)}
+                                className="text-left p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200"
+                              >
+                                <div className="flex items-start">
+                                  <span className="text-2xl mr-3">{generator.icon}</span>
+                                  <div className="flex-1">
+                                    <h5 className="font-medium text-gray-900 mb-1">{generator.name}</h5>
+                                    <p className="text-sm text-gray-600">{generator.description}</p>
+                                  </div>
+                                  <span className="text-blue-500 text-sm">→</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Generador FB Pixel Producto */}
+                      {selectedGenerator === 'fb-pixel-product' && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h5 className="font-medium text-gray-900">🛒 Facebook Pixel - Producto</h5>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedGenerator(null)}
+                              className="text-gray-500 hover:text-gray-700"
+                            >
+                              ← Volver
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-gray-700 font-medium mb-2 text-sm">
+                                ID del Pixel *
+                              </label>
+                              <input
+                                type="text"
+                                value={fbPixelId}
+                                onChange={(e) => setFbPixelId(e.target.value)}
+                                className="input-minimal text-sm"
+                                placeholder="823731829860705"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-gray-700 font-medium mb-2 text-sm">
+                                ID del Producto *
+                              </label>
+                              <input
+                                type="text"
+                                value={productoId}
+                                onChange={(e) => setProductoId(e.target.value)}
+                                className="input-minimal text-sm"
+                                placeholder="Nombre del producto"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-gray-700 font-medium mb-2 text-sm">
+                                Precio (COP) *
+                              </label>
+                              <input
+                                type="number"
+                                value={precio}
+                                onChange={(e) => setPrecio(e.target.value)}
+                                className="input-minimal text-sm"
+                                placeholder="Precio en COP"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-gray-700 font-medium mb-2 text-sm">
+                                Tasa USD (COP)
+                              </label>
+                              <input
+                                type="number"
+                                value={usd}
+                                onChange={(e) => setUsd(e.target.value)}
+                                className="input-minimal text-sm"
+                                placeholder="Precio dólar"
+                              />
+                              {precio && usd && (
+                                <p className="text-xs text-blue-600 mt-1">
+                                  💰 Precio USD: ${(parseFloat(precio) / parseFloat(usd)).toFixed(2)}
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              <label className="block text-gray-700 font-medium mb-2 text-sm">
+                                Días Cookie
+                              </label>
+                              <input
+                                type="number"
+                                value={diasCookie}
+                                onChange={(e) => setDiasCookie(e.target.value)}
+                                className="input-minimal text-sm"
+                                placeholder="20"
+                              />
+                            </div>
+                            <div className="flex items-end">
+                              <button
+                                type="button"
+                                onClick={generateFacebookPixelScript}
+                                className="btn-accent w-full text-sm"
+                              >
+                                ✨ Generar Script Producto
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Generador FB Pixel PageView */}
+                      {selectedGenerator === 'fb-pixel-pageview' && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h5 className="font-medium text-gray-900">👁️ Facebook Pixel - Solo PageView</h5>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedGenerator(null)}
+                              className="text-gray-500 hover:text-gray-700"
+                            >
+                              ← Volver
+                            </button>
+                          </div>
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-gray-700 font-medium mb-2 text-sm">
+                                ID del Pixel *
+                              </label>
+                              <input
+                                type="text"
+                                value={fbPixelIdPageView}
+                                onChange={(e) => setFbPixelIdPageView(e.target.value)}
+                                className="input-minimal text-sm"
+                                placeholder="823731829860705"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Solo rastreará las visitas a la página, sin eventos de compra
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={generateFacebookPixelPageView}
+                              className="btn-accent w-full text-sm"
+                            >
+                              ✨ Generar Script PageView
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Scripts añadidos */}
+                  {scripts.length > 0 && (
+                    <div className="minimal-card p-6 border-gray-200">
+                      <h4 className="text-gray-900 font-medium mb-4 flex items-center">
+                        <span className="mr-2">📋</span>
+                        Scripts Añadidos ({scripts.length})
+                      </h4>
+                      <div className="space-y-4">
                         {scripts.map((script, index) => (
                           <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div className="flex items-center justify-between mb-2">
@@ -519,26 +903,33 @@ export default function Home() {
                           </div>
                         ))}
                       </div>
-                    )}
+                    </div>
+                  )}
 
+                  {/* Formulario manual para scripts personalizados */}
+                  <div className="minimal-card p-6 border-gray-200">
+                    <h4 className="text-gray-900 font-medium mb-4 flex items-center">
+                      <span className="mr-2">📝</span>
+                      Script Personalizado (Avanzado)
+                    </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    value={newScriptName}
-                    onChange={(e) => setNewScriptName(e.target.value)}
+                      <input
+                        type="text"
+                        value={newScriptName}
+                        onChange={(e) => setNewScriptName(e.target.value)}
                         className="input-minimal"
                         placeholder="Nombre del script"
-                  />
+                      />
                       <div className="md:col-span-2">
-                  <textarea
-                    value={newScriptCode}
-                    onChange={(e) => setNewScriptCode(e.target.value)}
+                        <textarea
+                          value={newScriptCode}
+                          onChange={(e) => setNewScriptCode(e.target.value)}
                           className="textarea-minimal"
-                          placeholder="console.log('Script de seguimiento');"
-                  />
+                          placeholder="console.log('Script de seguimiento personalizado');"
+                        />
                       </div>
-                  <button
-                    type="button"
+                      <button
+                        type="button"
                         onClick={() => {
                           if (newScriptName && newScriptCode) {
                             setScripts([...scripts, { name: newScriptName, code: newScriptCode }]);
@@ -547,11 +938,11 @@ export default function Home() {
                           }
                         }}
                         className="btn-secondary md:col-span-2"
-                  >
-                    Agregar Script
-                  </button>
-                </div>
-              </div>
+                      >
+                        Agregar Script Manual
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Botón de creación */}
               <button
@@ -1006,4 +1397,6 @@ export default function Home() {
     </div>
   );
 }
+
+
 
