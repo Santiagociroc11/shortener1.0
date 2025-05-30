@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Link2, ExternalLink, Pencil, Trash2, QrCode, Calendar, Tag, Copy } from 'lucide-react';
+import { Link2, ExternalLink, Pencil, Trash2, QrCode, Calendar, Tag, Copy, User, Sparkles, BarChart3, Link as LinkIcon } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -10,6 +10,7 @@ import Select from 'react-select';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Zap } from 'lucide-react';
 
 // ✅ OPTIMIZACIÓN: Generador de URLs más robusto
 function generateShortUrl(): string {
@@ -254,460 +255,641 @@ export default function Home() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Acortador de URLs con Seguimiento
-        </h1>
-        <p className="text-xl text-gray-600">
-          Crea enlaces cortos y agrega scripts de seguimiento personalizados
-        </p>
-        {!user && (
-          <div className="mt-6">
-            <p className="text-gray-600 mb-4">
-              Inicia sesión para crear y gestionar tus enlaces
+    <div className="min-h-screen relative">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          {/* Título principal con efectos visuales */}
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center justify-center p-2 bg-white/10 rounded-full backdrop-blur-md border border-white/20 mb-6">
+              <div className="flex items-center px-4 py-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-3 pulse-glow"></div>
+                <span className="text-white/90 text-sm font-medium">Sistema Activo</span>
+              </div>
+            </div>
+            
+            <h1 className="text-6xl md:text-7xl font-bold text-white mb-6 leading-tight">
+              <span className="bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
+                Acorta
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-purple-200 via-pink-200 to-white bg-clip-text text-transparent">
+                y Rastrea
+              </span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Crea enlaces inteligentes con seguimiento avanzado y scripts personalizados.
+              <br />
+              <span className="text-purple-200 font-medium">Analítica en tiempo real, diseño profesional.</span>
             </p>
-            <button
-              onClick={() => navigate('/login')}
-              className="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Iniciar Sesión
-            </button>
-          </div>
-        )}
-      </div>
 
-      {user && (
-        <>
-          {/* Formulario de creación */}
-          <div className="bg-white rounded-lg shadow-md p-6 md:p-8 mb-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Título */}
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                  Título del enlace
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Mi enlace importante"
-                  required
-                />
-              </div>
-
-              {/* URL Original */}
-              <div>
-                <label htmlFor="originalUrl" className="block text-sm font-medium text-gray-700 mb-2">
-                  URL Original
-                </label>
-                <input
-                  type="url"
-                  id="originalUrl"
-                  value={originalUrl}
-                  onChange={(e) => {
-                    setOriginalUrl(e.target.value);
-                    // Resetear el estado de YouTube Deep Link cuando cambia la URL
-                    setIsYouTubeDeepLink(false);
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://ejemplo.com"
-                  required
-                />
-              </div>
-
-              {/* Opción de YouTube Deep Link */}
-              {isYouTubeUrl(originalUrl) && (
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="youtubeDeepLink"
-                    checked={isYouTubeDeepLink}
-                    onChange={(e) => setIsYouTubeDeepLink(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="youtubeDeepLink" className="ml-2 block text-sm text-gray-700">
-                    Activar Deep Link para YouTube (abrirá la app de YouTube en dispositivos móviles)
-                  </label>
-                </div>
-              )}
-
-              {/* URL Personalizada */}
-              <div>
-                <label htmlFor="customSlug" className="block text-sm font-medium text-gray-700 mb-2">
-                  URL Personalizada (opcional)
-                </label>
-                <input
-                  type="text"
-                  id="customSlug"
-                  value={customSlug}
-                  onChange={(e) => setCustomSlug(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="mi-url-personalizada"
-                />
-              </div>
-
-              {/* Descripción */}
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                  Descripción (opcional)
-                </label>
-                <textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Descripción del enlace"
-                  rows={2}
-                />
-              </div>
-
-              {/* Fecha de Expiración */}
-              <div>
-                <label htmlFor="expiresAt" className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha de Expiración (opcional)
-                </label>
-                <DatePicker
-                  selected={expiresAt}
-                  onChange={(date) => setExpiresAt(date)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholderText="Selecciona una fecha..."
-                  minDate={new Date()}
-                  dateFormat="dd/MM/yyyy"
-                />
-              </div>
-
-              {/* Sección para agregar múltiples scripts en creación */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Scripts de Seguimiento (opcional)
-                </label>
-                <div className="mb-2">
-                  <input
-                    type="text"
-                    value={newScriptName}
-                    onChange={(e) => setNewScriptName(e.target.value)}
-                    placeholder="Nombre del script (ej: seguimiento gtm)"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 mb-2"
-                  />
-                  <textarea
-                    value={newScriptCode}
-                    onChange={(e) => setNewScriptCode(e.target.value)}
-                    placeholder="Código del script"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    rows={4}
-                  />
+            {!user && (
+              <div className="glass-card p-8 max-w-md mx-auto">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 float-animation">
+                    <User className="w-8 h-8 text-white" />
+                  </div>
+                  <p className="text-white/90 mb-6 text-lg">
+                    Únete para crear y gestionar tus enlaces
+                  </p>
                   <button
-                    type="button"
-                    onClick={handleAddScript}
-                    className="mt-2 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700"
+                    onClick={() => navigate('/login')}
+                    className="btn-gradient w-full"
                   >
-                    Agregar Script
+                    <span className="flex items-center justify-center">
+                      Iniciar Sesión
+                      <Sparkles className="w-5 h-5 ml-2" />
+                    </span>
                   </button>
                 </div>
-                {scripts.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="text-md font-medium text-gray-700">Scripts Agregados:</h3>
-                    <ul>
-                      {scripts.map((script, index) => (
-                        <li key={index} className="flex justify-between items-center border p-2 mt-1 rounded">
-                          <div>
-                            <strong>{script.name}:</strong> {script.code.substring(0, 50)}...
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveScript(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            Quitar
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
-
-              <button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center"
-              >
-                <Link2 className="w-5 h-5 mr-2" />
-                Acortar URL
-              </button>
-            </form>
+            )}
           </div>
 
-          {/* Lista de enlaces */}
-          {links.length > 0 && (
-            <div className="bg-white rounded-lg shadow-md">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">Tus Enlaces Recientes</h2>
-              </div>
-              <ul className="divide-y divide-gray-200">
-                {links.map(link => (
-                  <li key={link.id} className="p-6">
-                    {editingLink?.id === link.id ? (
-                      <div className="space-y-4">
-                        {/* Título */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            Título
-                          </label>
-                          <input
-                            type="text"
-                            value={editingLink.title || ''}
-                            onChange={e => setEditingLink({
-                              ...editingLink,
-                              title: e.target.value
-                            })}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            placeholder="Título del enlace"
-                          />
-                        </div>
+          {user && (
+            <>
+              {/* Formulario de creación moderno */}
+              <div className="glass-card p-8 mb-12 max-w-4xl mx-auto">
+                <div className="flex items-center mb-8">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mr-4 float-animation">
+                    <Link2 className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white mb-1">Crear Nuevo Enlace</h2>
+                    <p className="text-white/70">Configura tu enlace con opciones avanzadas</p>
+                  </div>
+                </div>
 
-                        {/* Edición de URL Original */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">
-                            URL Original
-                          </label>
-                          <input
-                            type="url"
-                            value={editingLink.original_url}
-                            onChange={e => setEditingLink({
-                              ...editingLink,
-                              original_url: e.target.value
-                            })}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          />
-                        </div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Grid de inputs principales */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Título */}
+                    <div className="lg:col-span-2">
+                      <label className="block text-white/90 font-medium mb-3 text-lg">
+                        🏷️ Título del enlace
+                      </label>
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="input-modern w-full"
+                        placeholder="Mi enlace importante"
+                        required
+                      />
+                    </div>
 
-                        {/* Sección de edición de scripts */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Scripts de Seguimiento
+                    {/* URL Original */}
+                    <div className="lg:col-span-2">
+                      <label className="block text-white/90 font-medium mb-3 text-lg">
+                        🔗 URL Original
+                      </label>
+                      <input
+                        type="url"
+                        value={originalUrl}
+                        onChange={(e) => {
+                          setOriginalUrl(e.target.value);
+                          setIsYouTubeDeepLink(false);
+                        }}
+                        className="input-modern w-full"
+                        placeholder="https://ejemplo.com"
+                        required
+                      />
+                    </div>
+
+                    {/* URL Personalizada */}
+                    <div>
+                      <label className="block text-white/90 font-medium mb-3 text-lg">
+                        ⚡ URL Personalizada
+                      </label>
+                      <input
+                        type="text"
+                        value={customSlug}
+                        onChange={(e) => setCustomSlug(e.target.value)}
+                        className="input-modern w-full"
+                        placeholder="mi-url-personalizada"
+                      />
+                    </div>
+
+                    {/* Descripción */}
+                    <div>
+                      <label className="block text-white/90 font-medium mb-3 text-lg">
+                        📝 Descripción
+                      </label>
+                      <input
+                        type="text"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="input-modern w-full"
+                        placeholder="Descripción del enlace"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Opciones avanzadas */}
+                  <div className="glass-card p-6 border border-white/10">
+                    <h3 className="text-white/90 font-semibold mb-4 text-lg flex items-center">
+                      🚀 Opciones Avanzadas
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* YouTube Deep Link */}
+                      {isYouTubeUrl(originalUrl) && (
+                        <div className="md:col-span-2">
+                          <label className="flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={isYouTubeDeepLink}
+                              onChange={(e) => setIsYouTubeDeepLink(e.target.checked)}
+                              className="sr-only"
+                            />
+                            <div className={`w-6 h-6 rounded-lg border-2 transition-all duration-300 ${
+                              isYouTubeDeepLink 
+                                ? 'bg-red-500 border-red-500' 
+                                : 'border-white/30 bg-white/10'
+                            }`}>
+                              {isYouTubeDeepLink && (
+                                <svg className="w-4 h-4 text-white ml-0.5 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
+                            <span className="ml-3 text-white/90">
+                              🎥 Deep Link para YouTube (abre la app móvil)
+                            </span>
                           </label>
-                          {editingLink.script_code && editingLink.script_code.map((script, index) => (
-                            <div key={index} className="border p-2 rounded mb-2">
-                              <input
-                                type="text"
-                                value={script.name}
-                                onChange={(e) => {
-                                  const newScripts = editingLink.script_code ? [...editingLink.script_code] : [];
-                                  newScripts[index].name = e.target.value;
-                                  setEditingLink({ ...editingLink, script_code: newScripts });
-                                }}
-                                className="w-full px-2 py-1 border rounded mb-1"
-                                placeholder="Nombre del script"
-                              />
-                              <textarea
-                                value={script.code}
-                                onChange={(e) => {
-                                  const newScripts = editingLink.script_code ? [...editingLink.script_code] : [];
-                                  newScripts[index].code = e.target.value;
-                                  setEditingLink({ ...editingLink, script_code: newScripts });
-                                }}
-                                className="w-full px-2 py-1 border rounded"
-                                rows={3}
-                                placeholder="Código del script"
-                              ></textarea>
+                        </div>
+                      )}
+
+                      {/* Fecha de expiración */}
+                      <div>
+                        <label className="block text-white/90 font-medium mb-3">
+                          📅 Fecha de expiración
+                        </label>
+                        <DatePicker
+                          selected={expiresAt}
+                          onChange={(date) => setExpiresAt(date)}
+                          showTimeSelect
+                          timeFormat="HH:mm"
+                          timeIntervals={15}
+                          dateFormat="dd/MM/yyyy HH:mm"
+                          locale={es}
+                          placeholderText="Seleccionar fecha"
+                          className="input-modern w-full"
+                          isClearable
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Scripts de seguimiento */}
+                  <div className="glass-card p-6 border border-white/10">
+                    <h3 className="text-white/90 font-semibold mb-4 text-lg flex items-center">
+                      🎯 Scripts de Seguimiento
+                    </h3>
+                    
+                    {scripts.length > 0 && (
+                      <div className="space-y-4 mb-6">
+                        {scripts.map((script, index) => (
+                          <div key={index} className="bg-white/5 p-4 rounded-xl border border-white/10">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-white/90 font-medium">{script.name}</span>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  const newScripts = editingLink.script_code ? editingLink.script_code.filter((_, i) => i !== index) : [];
-                                  setEditingLink({ ...editingLink, script_code: newScripts });
-                                }}
-                                className="text-red-500 hover:text-red-700 mt-1"
+                                onClick={() => setScripts(scripts.filter((_, i) => i !== index))}
+                                className="text-red-400 hover:text-red-300 transition-colors"
                               >
-                                Quitar
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                          ))}
-                          {/* Sección para agregar un nuevo script en modo edición */}
-                          <div className="mt-4">
-                            <input
-                              type="text"
-                              value={editingNewScriptName}
-                              onChange={(e) => setEditingNewScriptName(e.target.value)}
-                              placeholder="Nombre del script"
-                              className="w-full px-4 py-2 border border-gray-300 rounded-md mb-2"
-                            />
-                            <textarea
-                              value={editingNewScriptCode}
-                              onChange={(e) => setEditingNewScriptCode(e.target.value)}
-                              placeholder="Código del script"
-                              className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                              rows={3}
-                            ></textarea>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (!editingNewScriptName || !editingNewScriptCode) {
-                                  toast.error("Por favor, ingresa nombre y código del script.");
-                                  return;
-                                }
-                                const newScripts = editingLink && editingLink.script_code ? [...editingLink.script_code] : [];
-                                newScripts.push({ name: editingNewScriptName, code: editingNewScriptCode });
-                                setEditingLink({ ...editingLink!, script_code: newScripts });
-                                setEditingNewScriptName('');
-                                setEditingNewScriptCode('');
-                              }}
-                              className="mt-2 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700"
-                            >
-                              Agregar Script
-                            </button>
+                            <code className="text-purple-200 text-sm font-mono bg-black/20 p-2 rounded-lg block overflow-x-auto">
+                              {script.code.substring(0, 100)}...
+                            </code>
                           </div>
-                        </div>
-
-                        <div className="flex space-x-4">
-                          <button
-                            onClick={() => handleUpdate(editingLink)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                          >
-                            Guardar
-                          </button>
-                          <button
-                            onClick={() => setEditingLink(null)}
-                            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
-                          >
-                            Cancelar
-                          </button>
-                        </div>
+                        ))}
                       </div>
-                    ) : (
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        value={newScriptName}
+                        onChange={(e) => setNewScriptName(e.target.value)}
+                        className="input-modern"
+                        placeholder="Nombre del script"
+                      />
+                      <div className="md:col-span-2">
+                        <textarea
+                          value={newScriptCode}
+                          onChange={(e) => setNewScriptCode(e.target.value)}
+                          className="input-modern w-full h-24 resize-none"
+                          placeholder="console.log('Script de seguimiento');"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newScriptName && newScriptCode) {
+                            setScripts([...scripts, { name: newScriptName, code: newScriptCode }]);
+                            setNewScriptName('');
+                            setNewScriptCode('');
+                          }
+                        }}
+                        className="btn-secondary md:col-span-2"
+                      >
+                        Agregar Script
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Botón de creación */}
+                  <button
+                    type="submit"
+                    className="btn-gradient w-full text-lg py-4"
+                  >
+                    <span className="flex items-center justify-center">
+                      Crear Enlace Inteligente
+                      <Zap className="w-6 h-6 ml-2" />
+                    </span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Lista de enlaces moderna */}
+              {links.length > 0 && (
+                <div className="glass-card p-8 max-w-6xl mx-auto">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl flex items-center justify-center mr-4 float-animation">
+                        <Link2 className="w-6 h-6 text-white" />
+                      </div>
                       <div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-medium text-gray-900 truncate">
-                              {link.title || 'Sin título'}
-                            </h3>
-                            <p className="mt-1 text-sm text-gray-500">
-                              {window.location.origin}/{link.short_url}
-                            </p>
-                            <a 
-                              href={link.original_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="mt-1 text-sm text-blue-600 hover:text-blue-800 break-all"
-                            >
-                              {link.original_url}
-                            </a>
-                            {link.description && (
-                              <p className="mt-1 text-sm text-gray-600">
-                                {link.description}
-                              </p>
+                        <h2 className="text-2xl font-bold text-white mb-1">Tus Enlaces</h2>
+                        <p className="text-white/70">{links.length} enlaces creados</p>
+                      </div>
+                    </div>
+                    <div className="badge-modern">
+                      <span className="status-indicator status-active"></span>
+                      Activos
+                    </div>
+                  </div>
+
+                  <div className="grid gap-6">
+                    {links.map(link => (
+                      <div key={link.id} className="glass-card p-6 border border-white/10 hover:border-white/20 transition-all duration-300">
+                        {editingLink?.id === link.id ? (
+                          /* Modo de edición */
+                          <div className="space-y-6">
+                            <div className="flex items-center mb-6">
+                              <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mr-3">
+                                <Pencil className="w-5 h-5 text-white" />
+                              </div>
+                              <h3 className="text-xl font-semibold text-white">Editando Enlace</h3>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Título */}
+                              <div className="md:col-span-2">
+                                <label className="block text-white/90 font-medium mb-3">
+                                  🏷️ Título
+                                </label>
+                                <input
+                                  type="text"
+                                  value={editingLink.title || ''}
+                                  onChange={e => setEditingLink({
+                                    ...editingLink,
+                                    title: e.target.value
+                                  })}
+                                  className="input-modern w-full"
+                                  placeholder="Título del enlace"
+                                />
+                              </div>
+
+                              {/* URL Original */}
+                              <div className="md:col-span-2">
+                                <label className="block text-white/90 font-medium mb-3">
+                                  🔗 URL Original
+                                </label>
+                                <input
+                                  type="url"
+                                  value={editingLink.original_url}
+                                  onChange={e => setEditingLink({
+                                    ...editingLink,
+                                    original_url: e.target.value
+                                  })}
+                                  className="input-modern w-full"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Scripts de seguimiento en edición */}
+                            <div className="glass-card p-6 border border-white/10">
+                              <h4 className="text-white/90 font-semibold mb-4 flex items-center">
+                                🎯 Scripts de Seguimiento
+                              </h4>
+                              
+                              {editingLink.script_code && editingLink.script_code.map((script, index) => (
+                                <div key={index} className="bg-white/5 p-4 rounded-xl border border-white/10 mb-4">
+                                  <input
+                                    type="text"
+                                    value={script.name}
+                                    onChange={(e) => {
+                                      const newScripts = editingLink.script_code ? [...editingLink.script_code] : [];
+                                      newScripts[index].name = e.target.value;
+                                      setEditingLink({ ...editingLink, script_code: newScripts });
+                                    }}
+                                    className="input-modern w-full mb-3"
+                                    placeholder="Nombre del script"
+                                  />
+                                  <textarea
+                                    value={script.code}
+                                    onChange={(e) => {
+                                      const newScripts = editingLink.script_code ? [...editingLink.script_code] : [];
+                                      newScripts[index].code = e.target.value;
+                                      setEditingLink({ ...editingLink, script_code: newScripts });
+                                    }}
+                                    className="input-modern w-full h-24 resize-none mb-3"
+                                    placeholder="Código del script"
+                                  ></textarea>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const newScripts = editingLink.script_code ? editingLink.script_code.filter((_, i) => i !== index) : [];
+                                      setEditingLink({ ...editingLink, script_code: newScripts });
+                                    }}
+                                    className="text-red-400 hover:text-red-300 transition-colors flex items-center"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-1" />
+                                    Quitar Script
+                                  </button>
+                                </div>
+                              ))}
+
+                              {/* Agregar nuevo script en edición */}
+                              <div className="space-y-3">
+                                <input
+                                  type="text"
+                                  value={editingNewScriptName}
+                                  onChange={(e) => setEditingNewScriptName(e.target.value)}
+                                  placeholder="Nombre del script"
+                                  className="input-modern w-full"
+                                />
+                                <textarea
+                                  value={editingNewScriptCode}
+                                  onChange={(e) => setEditingNewScriptCode(e.target.value)}
+                                  placeholder="Código del script"
+                                  className="input-modern w-full h-24 resize-none"
+                                ></textarea>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!editingNewScriptName || !editingNewScriptCode) {
+                                      toast.error("Por favor, ingresa nombre y código del script.");
+                                      return;
+                                    }
+                                    const newScripts = editingLink && editingLink.script_code ? [...editingLink.script_code] : [];
+                                    newScripts.push({ name: editingNewScriptName, code: editingNewScriptCode });
+                                    setEditingLink({ ...editingLink!, script_code: newScripts });
+                                    setEditingNewScriptName('');
+                                    setEditingNewScriptCode('');
+                                  }}
+                                  className="btn-secondary"
+                                >
+                                  Agregar Script
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="flex space-x-4">
+                              <button
+                                onClick={() => handleUpdate(editingLink)}
+                                className="btn-gradient flex-1"
+                              >
+                                <span className="flex items-center justify-center">
+                                  Guardar Cambios
+                                  <ExternalLink className="w-4 h-4 ml-2" />
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => setEditingLink(null)}
+                                className="btn-secondary flex-1"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Vista normal del enlace */
+                          <div>
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex-1">
+                                <div className="flex items-center mb-2">
+                                  <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg flex items-center justify-center mr-3">
+                                    <Link2 className="w-4 h-4 text-white" />
+                                  </div>
+                                  <h3 className="text-lg font-semibold text-white truncate">
+                                    {link.title || 'Sin título'}
+                                  </h3>
+                                </div>
+                                
+                                <div className="space-y-2 mb-4">
+                                  <div className="flex items-center text-white/80">
+                                    <span className="text-sm">🔗 Enlace corto:</span>
+                                    <code className="ml-2 px-2 py-1 bg-black/20 rounded text-purple-200 font-mono text-sm">
+                                      {window.location.origin}/{link.short_url}
+                                    </code>
+                                  </div>
+                                  <div className="flex items-center text-white/70">
+                                    <span className="text-sm">🌐 Destino:</span>
+                                    <span className="ml-2 text-sm truncate max-w-md">
+                                      {link.original_url}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center space-x-4 text-white/60">
+                                  <div className="flex items-center">
+                                    <BarChart3 className="w-4 h-4 mr-1" />
+                                    <span className="text-sm">{link.visits} visitas</span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Calendar className="w-4 h-4 mr-1" />
+                                    <span className="text-sm">
+                                      {format(new Date(link.created_at), 'dd MMM yyyy', { locale: es })}
+                                    </span>
+                                  </div>
+                                  {link.script_code && link.script_code.length > 0 && (
+                                    <div className="flex items-center">
+                                      <Tag className="w-4 h-4 mr-1" />
+                                      <span className="text-sm">{link.script_code.length} scripts</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center space-x-2 ml-4">
+                                <button
+                                  onClick={async () => {
+                                    const shortLink = `${window.location.origin}/${link.short_url}`;
+                                    await navigator.clipboard.writeText(shortLink);
+                                    toast.success('¡Copiado! ✨');
+                                  }}
+                                  className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 group"
+                                  title="Copiar enlace"
+                                >
+                                  <Copy className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                                </button>
+                                
+                                <button
+                                  onClick={() => setShowQR(link.short_url)}
+                                  className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 group"
+                                  title="Mostrar QR"
+                                >
+                                  <QrCode className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                                </button>
+                                
+                                <button
+                                  onClick={() => setEditingLink(link)}
+                                  className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-xl transition-all duration-300 group"
+                                  title="Editar"
+                                >
+                                  <Pencil className="w-4 h-4 text-blue-300 group-hover:scale-110 transition-transform" />
+                                </button>
+                                
+                                <button
+                                  onClick={() => handleDelete(link.id)}
+                                  className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-xl transition-all duration-300 group"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-300 group-hover:scale-110 transition-transform" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {link.script_code && link.script_code.length > 0 && (
+                              <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                <h4 className="text-white/90 font-medium mb-2 flex items-center">
+                                  🎯 Scripts Activos
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {link.script_code.map((script, index) => (
+                                    <span 
+                                      key={index} 
+                                      className="badge-modern text-xs"
+                                      title={script.code.substring(0, 100)}
+                                    >
+                                      {script.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
                             )}
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <span className="text-sm text-gray-500">
-                              {link.visits} visitas
-                            </span>
-                            <button
-                              onClick={() => setShowQR(link.short_url)}
-                              className="text-gray-400 hover:text-gray-500"
-                              title="Generar QR"
-                            >
-                              <QrCode className="h-5 w-5" />
-                            </button>
-                            <button
-                              onClick={() => setEditingLink(link)}
-                              className="text-gray-400 hover:text-gray-500"
-                              title="Editar"
-                            >
-                              <Pencil className="h-5 w-5" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(link.id)}
-                              className="text-red-400 hover:text-red-500"
-                              title="Eliminar"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </button>
-                            <button
-                              onClick={async () => {
-                                const shortLink = `${window.location.origin}/${link.short_url}`;
-                                await navigator.clipboard.writeText(shortLink);
-                                toast.success('¡Copiado al portapapeles!');
-                              }}
-                              className="text-gray-400 hover:text-gray-500"
-                              title="Copiar"
-                            >
-                              <Copy className="h-5 w-5" />
-                            </button>
-                            <a
-                              href={`/${link.short_url}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-gray-400 hover:text-gray-500"
-                              title="Abrir enlace"
-                            >
-                              <ExternalLink className="h-5 w-5" />
-                            </a>
-                          </div>
-                        </div>
-                        {link.script_code?.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-sm text-gray-500">Tiene script de seguimiento</p>
                           </div>
                         )}
                       </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <a
-                  href="/dashboard"
-                  className="text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Ver todos tus enlaces en el dashboard →
-                </a>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+                    ))}
+                  </div>
 
-      {/* Modal QR */}
+                  <div className="mt-8 p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-white font-semibold mb-1">¿Necesitas más funciones?</h3>
+                        <p className="text-white/70 text-sm">Explora el dashboard completo para análisis avanzado</p>
+                      </div>
+                      <a
+                        href="/dashboard"
+                        className="btn-gradient px-6 py-3"
+                      >
+                        <span className="flex items-center">
+                          Ver Dashboard
+                          <ExternalLink className="w-4 h-4 ml-2" />
+                        </span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Modal QR moderno */}
       {showQR && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Código QR</h3>
-            <div className="flex justify-center mb-4">
-              <QRCodeSVG
-                value={`${window.location.origin}/${showQR}`}
-                size={200}
-                level="H"
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={async () => {
-                  const shortLink = `${window.location.origin}/${showQR}`;
-                  await navigator.clipboard.writeText(shortLink);
-                  toast.success('¡Copiado al portapapeles!');
-                }}
-                className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 flex items-center justify-center"
-              >
-                <Copy className="w-5 h-5 mr-2" />
-                Copiar enlace
-              </button>
-              <button
-                onClick={() => setShowQR(null)}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-              >
-                Cerrar
-              </button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="glass-card p-8 max-w-sm w-full mx-auto">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 float-animation">
+                <QrCode className="w-8 h-8 text-white" />
+              </div>
+              
+              <h3 className="text-2xl font-bold text-white mb-2">Código QR</h3>
+              <p className="text-white/70 mb-6">Escanea para acceder al enlace</p>
+              
+              <div className="flex justify-center mb-6">
+                <div className="p-4 bg-white rounded-2xl">
+                  <QRCodeSVG
+                    value={`${window.location.origin}/${showQR}`}
+                    size={200}
+                    level="H"
+                    className="drop-shadow-lg"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <button
+                  onClick={async () => {
+                    const shortLink = `${window.location.origin}/${showQR}`;
+                    await navigator.clipboard.writeText(shortLink);
+                    toast.success('¡Enlace copiado! ✨');
+                  }}
+                  className="btn-gradient w-full"
+                >
+                  <span className="flex items-center justify-center">
+                    <Copy className="w-5 h-5 mr-2" />
+                    Copiar Enlace
+                  </span>
+                </button>
+                
+                <button
+                  onClick={() => setShowQR(null)}
+                  className="btn-secondary w-full"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      <footer className="bg-white shadow-sm mt-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
-          <p className="text-gray-700">desarrollado por santiago ciro - Automscc</p>
+      {/* Footer moderno */}
+      <footer className="relative mt-20 py-12">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <div className="glass-card p-8">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mr-4 float-animation">
+                <Link2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">SCC Shortener</h3>
+                <p className="text-white/70 text-sm">Advanced URL Tracking</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-center text-white/60 text-sm">
+              <span>Desarrollado con</span>
+              <span className="mx-2 text-red-400">❤️</span>
+              <span>por</span>
+              <span className="ml-1 font-medium text-white/80">Santiago Ciro - Automscc</span>
+            </div>
+            
+            <div className="mt-4 flex items-center justify-center space-x-4 text-white/40">
+              <div className="w-2 h-2 bg-green-400 rounded-full pulse-glow"></div>
+              <span className="text-xs">Sistema funcionando perfectamente</span>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

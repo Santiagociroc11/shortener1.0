@@ -13,16 +13,29 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="app-container">
           <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/link/:shortUrl" element={<LinkStats />} />
-            <Route path="/:shortUrl" element={<Redirect />} />
-          </Routes>
-          <Toaster position="top-right" />
+          <div className="relative z-10">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/link/:shortUrl" element={<LinkStats />} />
+              <Route path="/:shortUrl" element={<Redirect />} />
+            </Routes>
+          </div>
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              style: {
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '15px',
+              },
+            }}
+          />
         </div>
       </Router>
     </AuthProvider>
