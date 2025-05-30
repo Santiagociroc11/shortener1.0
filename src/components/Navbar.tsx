@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Link as LinkIcon, LogOut, User, BarChart3 } from 'lucide-react';
+import { Link as LinkIcon, LogOut, User, BarChart3, Home } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -47,6 +47,19 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-6">
             {user ? (
               <>
+                {/* Home Link */}
+                <Link
+                  to="/"
+                  className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                    location.pathname === '/'
+                      ? 'bg-yellow-400 text-black'
+                      : 'text-gray-700 hover:text-black hover:bg-gray-100'
+                  }`}
+                >
+                  <Home className="h-4 w-4 mr-2" />
+                  Crear Enlaces
+                </Link>
+
                 {/* Dashboard Link */}
                 <Link
                   to="/dashboard"
@@ -93,12 +106,24 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link
+                  to="/"
+                  className={`p-2 rounded-lg transition-all duration-200 ${
+                    location.pathname === '/'
+                      ? 'bg-yellow-400 text-black'
+                      : 'text-gray-700 hover:text-black hover:bg-gray-100'
+                  }`}
+                  title="Crear Enlaces"
+                >
+                  <Home className="h-5 w-5" />
+                </Link>
+                <Link
                   to="/dashboard"
                   className={`p-2 rounded-lg transition-all duration-200 ${
                     location.pathname === '/dashboard'
                       ? 'bg-yellow-400 text-black'
                       : 'text-gray-700 hover:text-black hover:bg-gray-100'
                   }`}
+                  title="Dashboard"
                 >
                   <BarChart3 className="h-5 w-5" />
                 </Link>
