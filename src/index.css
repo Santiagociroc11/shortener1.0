@@ -5,24 +5,35 @@
 /* Importar Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* Variables CSS personalizadas */
+/* Variables CSS minimalistas */
 :root {
-  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  --gradient-warning: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
-  --gradient-dark: linear-gradient(135deg, #2c3e50 0%, #4a6741 100%);
-  --gradient-cyber: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
-  --shadow-elegant: 0 10px 40px rgba(0, 0, 0, 0.1);
-  --shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --primary: #000000;
+  --secondary: #ffffff;
+  --accent: #fbbf24;
+  --accent-dark: #f59e0b;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
-/* Clases base mejoradas */
+/* Clases base */
 @layer base {
   body {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    background: white;
+    color: var(--gray-900);
+    line-height: 1.6;
   }
   
   .font-mono {
@@ -30,266 +41,316 @@
   }
 }
 
-/* Componentes personalizados */
+/* Componentes minimalistas */
 @layer components {
-  /* Contenedor principal con efectos */
+  /* Contenedor principal */
   .app-container {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: white;
     min-height: 100vh;
-    position: relative;
-    overflow-x: hidden;
   }
   
-  .app-container::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
+  /* Cards minimalistas */
+  .minimal-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    transition: all 0.2s ease;
   }
   
-  /* Cards glassmorphism */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    box-shadow: var(--shadow-elegant);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  .minimal-card:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: var(--gray-300);
   }
   
-  .glass-card:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: var(--shadow-hover);
-    background: rgba(255, 255, 255, 0.15);
-  }
-  
-  /* Botones modernos */
-  .btn-gradient {
-    background: var(--gradient-primary);
+  /* Botón principal */
+  .btn-primary {
+    background: var(--primary);
     color: white;
     border: none;
-    border-radius: 15px;
-    padding: 12px 30px;
-    font-weight: 600;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-  }
-  
-  .btn-gradient::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-  }
-  
-  .btn-gradient:hover::before {
-    left: 100%;
-  }
-  
-  .btn-gradient:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
-  }
-  
-  .btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 15px;
-    padding: 10px 25px;
+    border-radius: 8px;
+    padding: 12px 24px;
     font-weight: 500;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  .btn-primary:hover {
+    background: var(--gray-800);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+  
+  /* Botón amarillo */
+  .btn-accent {
+    background: var(--accent);
+    color: var(--primary);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  .btn-accent:hover {
+    background: var(--accent-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* Botón secundario */
+  .btn-secondary {
+    background: white;
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    cursor: pointer;
   }
   
   .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-2px);
+    background: var(--gray-50);
+    border-color: var(--gray-400);
+    transform: translateY(-1px);
   }
   
-  /* Inputs elegantes */
-  .input-modern {
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
-    padding: 15px 20px;
-    color: white;
-    font-size: 16px;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-  }
-  
-  .input-modern::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-  }
-  
-  .input-modern:focus {
-    outline: none;
-    border-color: rgba(255, 255, 255, 0.5);
-    background: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
-  }
-  
-  /* Navegación moderna */
-  .navbar-glass {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    position: relative;
-    z-index: 10;
-  }
-  
-  /* Animaciones flotantes */
-  .float-animation {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-  }
-  
-  .pulse-glow {
-    animation: pulseGlow 2s ease-in-out infinite alternate;
-  }
-  
-  @keyframes pulseGlow {
-    0% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
-    100% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6); }
-  }
-  
-  /* Efectos de hover para enlaces */
-  .link-hover {
-    transition: all 0.3s ease;
-    position: relative;
-  }
-  
-  .link-hover::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 0;
-    height: 2px;
+  /* Input minimalista */
+  .input-minimal {
     background: white;
-    transition: width 0.3s ease;
-  }
-  
-  .link-hover:hover::after {
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    transition: all 0.2s ease;
     width: 100%;
   }
   
-  /* Tablas modernas */
-  .table-modern {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  .input-minimal::placeholder {
+    color: var(--gray-400);
   }
   
-  .table-modern th {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    font-weight: 600;
-    padding: 20px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  .input-minimal:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgb(0 0 0 / 0.1);
+  }
+  
+  /* Textarea minimalista */
+  .textarea-minimal {
+    background: white;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    width: 100%;
+    resize: vertical;
+    min-height: 80px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  
+  .textarea-minimal::placeholder {
+    color: var(--gray-400);
+  }
+  
+  .textarea-minimal:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgb(0 0 0 / 0.1);
+  }
+  
+  /* Navegación minimalista */
+  .navbar-minimal {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  
+  /* Badge minimalista */
+  .badge-minimal {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    padding: 4px 8px;
+    border-radius: 6px;
     font-size: 12px;
+    font-weight: 500;
   }
   
-  .table-modern td {
-    padding: 15px 20px;
-    color: white;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  .badge-accent {
+    background: var(--accent);
+    color: var(--primary);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
   }
   
-  .table-modern tr:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-  
-  /* Indicadores de estado */
-  .status-indicator {
+  /* Indicador de estado */
+  .status-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     display: inline-block;
     margin-right: 8px;
-    animation: pulse 2s infinite;
   }
   
   .status-active {
-    background: #10b981;
-    box-shadow: 0 0 10px #10b981;
+    background: var(--accent);
   }
   
   .status-inactive {
-    background: #ef4444;
-    box-shadow: 0 0 10px #ef4444;
+    background: var(--gray-400);
   }
   
-  /* Badges modernos */
-  .badge-modern {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 12px;
+  /* Tabla minimalista */
+  .table-minimal {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .table-minimal th {
+    background: var(--gray-50);
+    color: var(--gray-700);
+    font-weight: 600;
+    padding: 16px;
+    text-align: left;
+    font-size: 14px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  
+  .table-minimal td {
+    padding: 16px;
+    color: var(--gray-900);
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 14px;
+  }
+  
+  .table-minimal tr:hover {
+    background: var(--gray-50);
+  }
+  
+  .table-minimal tr:last-child td {
+    border-bottom: none;
+  }
+  
+  /* Enlaces minimalistas */
+  .link-minimal {
+    color: var(--primary);
+    text-decoration: none;
     font-weight: 500;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.2s ease;
+    position: relative;
   }
   
-  /* Scroll personalizado */
+  .link-minimal:hover {
+    color: var(--accent-dark);
+  }
+  
+  .link-minimal::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--accent);
+    transition: width 0.2s ease;
+  }
+  
+  .link-minimal:hover::after {
+    width: 100%;
+  }
+  
+  /* Scroll personalizado minimalista */
   ::-webkit-scrollbar {
     width: 8px;
   }
   
   ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--gray-100);
   }
   
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--gray-300);
     border-radius: 4px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--gray-400);
   }
   
-  /* Efectos de carga */
-  .loading-shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.1) 25%,
-      rgba(255, 255, 255, 0.2) 50%,
-      rgba(255, 255, 255, 0.1) 75%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 24px 0;
   }
   
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+  /* Code block minimalista */
+  .code-minimal {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--gray-700);
+  }
+  
+  /* Loading spinner minimalista */
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--gray-200);
+    border-top: 2px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Efectos sutiles */
+  .hover-lift {
+    transition: transform 0.2s ease;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Modal overlay */
+  .modal-overlay {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
   }
 }

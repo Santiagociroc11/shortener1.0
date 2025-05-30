@@ -15,24 +15,22 @@ function App() {
       <Router>
         <div className="app-container">
           <Navbar />
-          <div className="relative z-10">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/link/:shortUrl" element={<LinkStats />} />
-              <Route path="/:shortUrl" element={<Redirect />} />
-            </Routes>
-          </div>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/link/:shortUrl" element={<LinkStats />} />
+            <Route path="/:shortUrl" element={<Redirect />} />
+          </Routes>
           <Toaster 
             position="top-right" 
             toastOptions={{
               style: {
-                background: 'rgba(255, 255, 255, 0.1)',
-                color: 'white',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '15px',
+                background: 'white',
+                color: '#111827',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
               },
             }}
           />

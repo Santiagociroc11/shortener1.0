@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Link as LinkIcon, LogOut, User, Zap, BarChart3, Sparkles } from 'lucide-react';
+import { Link as LinkIcon, LogOut, User, BarChart3 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -20,116 +20,106 @@ export default function Navbar() {
     try {
       await signOut();
       navigate('/');
-      toast.success('¡Sesión cerrada exitosamente! ✨');
+      toast.success('Sesión cerrada exitosamente');
     } catch (error) {
       toast.error('Error al cerrar sesión');
     }
   };
 
   return (
-    <>
-      <nav className="navbar-glass">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="flex justify-between items-center h-20">
-            {/* Logo y marca */}
-            <div className="flex items-center group">
-              <Link to="/" className="flex items-center text-white hover:text-white transition-all duration-300">
-                <div className="relative p-3 mr-4">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
-                  <LinkIcon className="h-8 w-8 relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-2xl bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-                    SCC Shortener
+    <nav className="navbar-minimal">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo y marca */}
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center text-gray-900 hover:text-gray-700 transition-colors duration-200">
+              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center mr-3">
+                <LinkIcon className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <span className="font-bold text-xl text-black">SCC Shortener</span>
+                <div className="text-xs text-gray-500 font-medium">URL Tracking</div>
+              </div>
+            </Link>
+          </div>
+
+          {/* Navegación principal */}
+          <div className="hidden md:flex items-center space-x-6">
+            {user ? (
+              <>
+                {/* Dashboard Link */}
+                <Link
+                  to="/dashboard"
+                  className={`flex items-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                    location.pathname === '/dashboard'
+                      ? 'bg-yellow-400 text-black'
+                      : 'text-gray-700 hover:text-black hover:bg-gray-100'
+                  }`}
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Link>
+
+                {/* Indicador de usuario */}
+                <div className="flex items-center px-3 py-1 bg-gray-100 rounded-full border">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
+                  <span className="text-gray-700 text-sm font-medium">
+                    {user.email?.split('@')[0]}
                   </span>
-                  <span className="text-xs text-purple-200 opacity-75 font-medium">
-                    Advanced URL Tracking
-                  </span>
                 </div>
+
+                {/* Botón de cerrar sesión */}
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center px-4 py-2 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg font-medium transition-all duration-200"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Salir
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="btn-primary px-6 py-2"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Iniciar Sesión
               </Link>
-            </div>
+            )}
+          </div>
 
-            {/* Navegación principal */}
-            <div className="hidden md:flex items-center space-x-2">
-              {user ? (
-                <>
-                  {/* Dashboard Link */}
-                  <Link
-                    to="/dashboard"
-                    className={`group relative flex items-center px-6 py-3 rounded-2xl font-medium transition-all duration-300 ${
-                      location.pathname === '/dashboard'
-                        ? 'bg-white/20 text-white shadow-lg'
-                        : 'text-white/80 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <BarChart3 className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
-                    <span className="link-hover">Dashboard</span>
-                    {location.pathname === '/dashboard' && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-2xl blur-xl"></div>
-                    )}
-                  </Link>
-
-                  {/* Indicador de usuario */}
-                  <div className="flex items-center px-4 py-2 mx-2 bg-white/10 rounded-full backdrop-blur-md border border-white/20">
-                    <div className="w-2 h-2 bg-green-400 rounded-full mr-2 pulse-glow"></div>
-                    <span className="text-white/90 text-sm font-medium truncate max-w-32">
-                      {user.email?.split('@')[0]}
-                    </span>
-                  </div>
-
-                  {/* Botón de cerrar sesión */}
-                  <button
-                    onClick={handleSignOut}
-                    className="group flex items-center px-6 py-3 text-white/80 hover:text-white hover:bg-red-500/20 rounded-2xl font-medium transition-all duration-300 border border-transparent hover:border-red-400/30"
-                  >
-                    <LogOut className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
-                    <span className="link-hover">Salir</span>
-                  </button>
-                </>
-              ) : (
+          {/* Menú móvil */}
+          <div className="md:hidden flex items-center space-x-3">
+            {user ? (
+              <>
                 <Link
-                  to="/login"
-                  className="group flex items-center px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-purple-500/25"
+                  to="/dashboard"
+                  className={`p-2 rounded-lg transition-all duration-200 ${
+                    location.pathname === '/dashboard'
+                      ? 'bg-yellow-400 text-black'
+                      : 'text-gray-700 hover:text-black hover:bg-gray-100'
+                  }`}
                 >
-                  <User className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform duration-300" />
-                  <span>Iniciar Sesión</span>
-                  <Sparkles className="h-4 w-4 ml-2 opacity-75" />
+                  <BarChart3 className="h-5 w-5" />
                 </Link>
-              )}
-            </div>
-
-            {/* Menú móvil */}
-            <div className="md:hidden flex items-center space-x-2">
-              {user ? (
-                <>
-                  <Link
-                    to="/dashboard"
-                    className="p-3 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-300"
-                  >
-                    <BarChart3 className="h-6 w-6" />
-                  </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="p-3 text-white/80 hover:text-white hover:bg-red-500/20 rounded-xl transition-all duration-300"
-                  >
-                    <LogOut className="h-6 w-6" />
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl transition-all duration-300 hover:scale-105"
+                <button
+                  onClick={handleSignOut}
+                  className="p-2 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
                 >
-                  <User className="h-6 w-6" />
-                </Link>
-              )}
-            </div>
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="btn-primary p-2"
+              >
+                <User className="h-5 w-5" />
+              </Link>
+            )}
           </div>
         </div>
-
-        {/* Línea decorativa inferior */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-      </nav>
-    </>
+      </div>
+    </nav>
   );
 }

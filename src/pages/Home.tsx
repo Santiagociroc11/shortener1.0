@@ -255,51 +255,47 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="relative overflow-hidden py-20 px-4">
+      <div className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          {/* Título principal con efectos visuales */}
+          {/* Título principal minimalista */}
           <div className="text-center mb-16">
-            <div className="inline-flex items-center justify-center p-2 bg-white/10 rounded-full backdrop-blur-md border border-white/20 mb-6">
+            <div className="inline-flex items-center justify-center p-3 bg-gray-100 rounded-lg border mb-8">
               <div className="flex items-center px-4 py-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full mr-3 pulse-glow"></div>
-                <span className="text-white/90 text-sm font-medium">Sistema Activo</span>
+                <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                <span className="text-gray-700 text-sm font-medium">Sistema Activo</span>
               </div>
             </div>
             
-            <h1 className="text-6xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
-                Acorta
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-purple-200 via-pink-200 to-white bg-clip-text text-transparent">
-                y Rastrea
-              </span>
+            <h1 className="text-5xl md:text-6xl font-bold text-black mb-6 leading-tight">
+              URL Shortener
+              <div className="text-4xl md:text-5xl text-gray-600 mt-2">
+                con Tracking
+              </div>
             </h1>
             
-            <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Crea enlaces inteligentes con seguimiento avanzado y scripts personalizados.
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Crea enlaces cortos profesionales con seguimiento avanzado.
               <br />
-              <span className="text-purple-200 font-medium">Analítica en tiempo real, diseño profesional.</span>
+              <span className="text-black font-medium">Simple, rápido y poderoso.</span>
             </p>
 
             {!user && (
-              <div className="glass-card p-8 max-w-md mx-auto">
+              <div className="minimal-card p-8 max-w-md mx-auto">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4 float-animation">
+                  <div className="w-16 h-16 bg-black rounded-xl flex items-center justify-center mx-auto mb-6">
                     <User className="w-8 h-8 text-white" />
                   </div>
-                  <p className="text-white/90 mb-6 text-lg">
-                    Únete para crear y gestionar tus enlaces
+                  <p className="text-gray-700 mb-6 text-lg">
+                    Inicia sesión para crear y gestionar enlaces
                   </p>
                   <button
                     onClick={() => navigate('/login')}
-                    className="btn-gradient w-full"
+                    className="btn-primary w-full"
                   >
                     <span className="flex items-center justify-center">
                       Iniciar Sesión
-                      <Sparkles className="w-5 h-5 ml-2" />
                     </span>
                   </button>
                 </div>
@@ -309,15 +305,15 @@ export default function Home() {
 
           {user && (
             <>
-              {/* Formulario de creación moderno */}
-              <div className="glass-card p-8 mb-12 max-w-4xl mx-auto">
+              {/* Formulario de creación minimalista */}
+              <div className="minimal-card p-8 mb-12 max-w-4xl mx-auto">
                 <div className="flex items-center mb-8">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mr-4 float-animation">
+                  <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center mr-4">
                     <Link2 className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-white mb-1">Crear Nuevo Enlace</h2>
-                    <p className="text-white/70">Configura tu enlace con opciones avanzadas</p>
+                    <h2 className="text-2xl font-bold text-black mb-1">Crear Nuevo Enlace</h2>
+                    <p className="text-gray-600">Configura tu enlace con opciones avanzadas</p>
                   </div>
                 </div>
 
@@ -326,14 +322,14 @@ export default function Home() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Título */}
                     <div className="lg:col-span-2">
-                      <label className="block text-white/90 font-medium mb-3 text-lg">
-                        🏷️ Título del enlace
+                      <label className="block text-gray-900 font-medium mb-3">
+                        Título del enlace
                       </label>
                       <input
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="input-modern w-full"
+                        className="input-minimal"
                         placeholder="Mi enlace importante"
                         required
                       />
@@ -341,8 +337,8 @@ export default function Home() {
 
                     {/* URL Original */}
                     <div className="lg:col-span-2">
-                      <label className="block text-white/90 font-medium mb-3 text-lg">
-                        🔗 URL Original
+                      <label className="block text-gray-900 font-medium mb-3">
+                        URL Original
                       </label>
                       <input
                         type="url"
@@ -351,7 +347,7 @@ export default function Home() {
                           setOriginalUrl(e.target.value);
                           setIsYouTubeDeepLink(false);
                         }}
-                        className="input-modern w-full"
+                        className="input-minimal"
                         placeholder="https://ejemplo.com"
                         required
                       />
@@ -359,37 +355,37 @@ export default function Home() {
 
                     {/* URL Personalizada */}
                     <div>
-                      <label className="block text-white/90 font-medium mb-3 text-lg">
-                        ⚡ URL Personalizada
+                      <label className="block text-gray-900 font-medium mb-3">
+                        URL Personalizada (opcional)
                       </label>
                       <input
                         type="text"
                         value={customSlug}
                         onChange={(e) => setCustomSlug(e.target.value)}
-                        className="input-modern w-full"
+                        className="input-minimal"
                         placeholder="mi-url-personalizada"
                       />
                     </div>
 
                     {/* Descripción */}
                     <div>
-                      <label className="block text-white/90 font-medium mb-3 text-lg">
-                        📝 Descripción
+                      <label className="block text-gray-900 font-medium mb-3">
+                        Descripción (opcional)
                       </label>
                       <input
                         type="text"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        className="input-modern w-full"
+                        className="input-minimal"
                         placeholder="Descripción del enlace"
                       />
                     </div>
                   </div>
 
                   {/* Opciones avanzadas */}
-                  <div className="glass-card p-6 border border-white/10">
-                    <h3 className="text-white/90 font-semibold mb-4 text-lg flex items-center">
-                      🚀 Opciones Avanzadas
+                  <div className="minimal-card p-6 border-gray-200">
+                    <h3 className="text-gray-900 font-semibold mb-4 flex items-center">
+                      Opciones Avanzadas
                     </h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -401,21 +397,10 @@ export default function Home() {
                               type="checkbox"
                               checked={isYouTubeDeepLink}
                               onChange={(e) => setIsYouTubeDeepLink(e.target.checked)}
-                              className="sr-only"
+                              className="w-4 h-4 text-yellow-400 bg-gray-100 border-gray-300 rounded focus:ring-yellow-500 focus:ring-2"
                             />
-                            <div className={`w-6 h-6 rounded-lg border-2 transition-all duration-300 ${
-                              isYouTubeDeepLink 
-                                ? 'bg-red-500 border-red-500' 
-                                : 'border-white/30 bg-white/10'
-                            }`}>
-                              {isYouTubeDeepLink && (
-                                <svg className="w-4 h-4 text-white ml-0.5 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                            </div>
-                            <span className="ml-3 text-white/90">
-                              🎥 Deep Link para YouTube (abre la app móvil)
+                            <span className="ml-3 text-gray-700">
+                              Deep Link para YouTube (abre la app móvil)
                             </span>
                           </label>
                         </div>
@@ -423,8 +408,8 @@ export default function Home() {
 
                       {/* Fecha de expiración */}
                       <div>
-                        <label className="block text-white/90 font-medium mb-3">
-                          📅 Fecha de expiración
+                        <label className="block text-gray-900 font-medium mb-3">
+                          Fecha de expiración (opcional)
                         </label>
                         <DatePicker
                           selected={expiresAt}
@@ -435,7 +420,7 @@ export default function Home() {
                           dateFormat="dd/MM/yyyy HH:mm"
                           locale={es}
                           placeholderText="Seleccionar fecha"
-                          className="input-modern w-full"
+                          className="input-minimal"
                           isClearable
                         />
                       </div>
@@ -443,26 +428,26 @@ export default function Home() {
                   </div>
 
                   {/* Scripts de seguimiento */}
-                  <div className="glass-card p-6 border border-white/10">
-                    <h3 className="text-white/90 font-semibold mb-4 text-lg flex items-center">
-                      🎯 Scripts de Seguimiento
+                  <div className="minimal-card p-6 border-gray-200">
+                    <h3 className="text-gray-900 font-semibold mb-4 flex items-center">
+                      Scripts de Seguimiento
                     </h3>
                     
                     {scripts.length > 0 && (
                       <div className="space-y-4 mb-6">
                         {scripts.map((script, index) => (
-                          <div key={index} className="bg-white/5 p-4 rounded-xl border border-white/10">
+                          <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div className="flex items-center justify-between mb-2">
-                              <span className="text-white/90 font-medium">{script.name}</span>
+                              <span className="text-gray-900 font-medium">{script.name}</span>
                               <button
                                 type="button"
                                 onClick={() => setScripts(scripts.filter((_, i) => i !== index))}
-                                className="text-red-400 hover:text-red-300 transition-colors"
+                                className="text-red-600 hover:text-red-800 transition-colors"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                            <code className="text-purple-200 text-sm font-mono bg-black/20 p-2 rounded-lg block overflow-x-auto">
+                            <code className="code-minimal block overflow-x-auto">
                               {script.code.substring(0, 100)}...
                             </code>
                           </div>
@@ -475,14 +460,14 @@ export default function Home() {
                         type="text"
                         value={newScriptName}
                         onChange={(e) => setNewScriptName(e.target.value)}
-                        className="input-modern"
+                        className="input-minimal"
                         placeholder="Nombre del script"
                       />
                       <div className="md:col-span-2">
                         <textarea
                           value={newScriptCode}
                           onChange={(e) => setNewScriptCode(e.target.value)}
-                          className="input-modern w-full h-24 resize-none"
+                          className="textarea-minimal"
                           placeholder="console.log('Script de seguimiento');"
                         />
                       </div>
@@ -505,53 +490,53 @@ export default function Home() {
                   {/* Botón de creación */}
                   <button
                     type="submit"
-                    className="btn-gradient w-full text-lg py-4"
+                    className="btn-accent w-full text-lg py-4 font-semibold"
                   >
                     <span className="flex items-center justify-center">
-                      Crear Enlace Inteligente
-                      <Zap className="w-6 h-6 ml-2" />
+                      Crear Enlace
+                      <Zap className="w-5 h-5 ml-2" />
                     </span>
                   </button>
                 </form>
               </div>
 
-              {/* Lista de enlaces moderna */}
+              {/* Lista de enlaces minimalista */}
               {links.length > 0 && (
-                <div className="glass-card p-8 max-w-6xl mx-auto">
+                <div className="minimal-card p-8 max-w-6xl mx-auto">
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center">
-                      <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl flex items-center justify-center mr-4 float-animation">
+                      <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center mr-4">
                         <Link2 className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-bold text-white mb-1">Tus Enlaces</h2>
-                        <p className="text-white/70">{links.length} enlaces creados</p>
+                        <h2 className="text-2xl font-bold text-black mb-1">Tus Enlaces</h2>
+                        <p className="text-gray-600">{links.length} enlaces creados</p>
                       </div>
                     </div>
-                    <div className="badge-modern">
-                      <span className="status-indicator status-active"></span>
+                    <div className="badge-minimal">
+                      <span className="status-dot status-active"></span>
                       Activos
                     </div>
                   </div>
 
                   <div className="grid gap-6">
                     {links.map(link => (
-                      <div key={link.id} className="glass-card p-6 border border-white/10 hover:border-white/20 transition-all duration-300">
+                      <div key={link.id} className="minimal-card p-6 border border-gray-200 hover:border-gray-300 transition-all duration-300">
                         {editingLink?.id === link.id ? (
                           /* Modo de edición */
                           <div className="space-y-6">
                             <div className="flex items-center mb-6">
-                              <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center mr-3">
-                                <Pencil className="w-5 h-5 text-white" />
+                              <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center mr-3">
+                                <Pencil className="w-5 h-5 text-black" />
                               </div>
-                              <h3 className="text-xl font-semibold text-white">Editando Enlace</h3>
+                              <h3 className="text-xl font-semibold text-black">Editando Enlace</h3>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               {/* Título */}
                               <div className="md:col-span-2">
-                                <label className="block text-white/90 font-medium mb-3">
-                                  🏷️ Título
+                                <label className="block text-gray-900 font-medium mb-3">
+                                  Título
                                 </label>
                                 <input
                                   type="text"
@@ -560,15 +545,15 @@ export default function Home() {
                                     ...editingLink,
                                     title: e.target.value
                                   })}
-                                  className="input-modern w-full"
+                                  className="input-minimal w-full"
                                   placeholder="Título del enlace"
                                 />
                               </div>
 
                               {/* URL Original */}
                               <div className="md:col-span-2">
-                                <label className="block text-white/90 font-medium mb-3">
-                                  🔗 URL Original
+                                <label className="block text-gray-900 font-medium mb-3">
+                                  URL Original
                                 </label>
                                 <input
                                   type="url"
@@ -577,19 +562,19 @@ export default function Home() {
                                     ...editingLink,
                                     original_url: e.target.value
                                   })}
-                                  className="input-modern w-full"
+                                  className="input-minimal w-full"
                                 />
                               </div>
                             </div>
 
                             {/* Scripts de seguimiento en edición */}
-                            <div className="glass-card p-6 border border-white/10">
-                              <h4 className="text-white/90 font-semibold mb-4 flex items-center">
-                                🎯 Scripts de Seguimiento
+                            <div className="minimal-card p-6 border border-gray-200">
+                              <h4 className="text-gray-900 font-semibold mb-4 flex items-center">
+                                Scripts de Seguimiento
                               </h4>
                               
                               {editingLink.script_code && editingLink.script_code.map((script, index) => (
-                                <div key={index} className="bg-white/5 p-4 rounded-xl border border-white/10 mb-4">
+                                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
                                   <input
                                     type="text"
                                     value={script.name}
@@ -598,7 +583,7 @@ export default function Home() {
                                       newScripts[index].name = e.target.value;
                                       setEditingLink({ ...editingLink, script_code: newScripts });
                                     }}
-                                    className="input-modern w-full mb-3"
+                                    className="input-minimal w-full mb-3"
                                     placeholder="Nombre del script"
                                   />
                                   <textarea
@@ -608,7 +593,7 @@ export default function Home() {
                                       newScripts[index].code = e.target.value;
                                       setEditingLink({ ...editingLink, script_code: newScripts });
                                     }}
-                                    className="input-modern w-full h-24 resize-none mb-3"
+                                    className="textarea-minimal w-full h-24 resize-none mb-3"
                                     placeholder="Código del script"
                                   ></textarea>
                                   <button
@@ -617,7 +602,7 @@ export default function Home() {
                                       const newScripts = editingLink.script_code ? editingLink.script_code.filter((_, i) => i !== index) : [];
                                       setEditingLink({ ...editingLink, script_code: newScripts });
                                     }}
-                                    className="text-red-400 hover:text-red-300 transition-colors flex items-center"
+                                    className="text-red-600 hover:text-red-800 transition-colors flex items-center"
                                   >
                                     <Trash2 className="w-4 h-4 mr-1" />
                                     Quitar Script
@@ -632,13 +617,13 @@ export default function Home() {
                                   value={editingNewScriptName}
                                   onChange={(e) => setEditingNewScriptName(e.target.value)}
                                   placeholder="Nombre del script"
-                                  className="input-modern w-full"
+                                  className="input-minimal w-full"
                                 />
                                 <textarea
                                   value={editingNewScriptCode}
                                   onChange={(e) => setEditingNewScriptCode(e.target.value)}
                                   placeholder="Código del script"
-                                  className="input-modern w-full h-24 resize-none"
+                                  className="textarea-minimal w-full h-24 resize-none"
                                 ></textarea>
                                 <button
                                   type="button"
@@ -663,7 +648,7 @@ export default function Home() {
                             <div className="flex space-x-4">
                               <button
                                 onClick={() => handleUpdate(editingLink)}
-                                className="btn-gradient flex-1"
+                                className="btn-accent flex-1"
                               >
                                 <span className="flex items-center justify-center">
                                   Guardar Cambios
@@ -684,22 +669,22 @@ export default function Home() {
                             <div className="flex items-start justify-between mb-4">
                               <div className="flex-1">
                                 <div className="flex items-center mb-2">
-                                  <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-400 rounded-lg flex items-center justify-center mr-3">
-                                    <Link2 className="w-4 h-4 text-white" />
+                                  <div className="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                                    <Link2 className="w-4 h-4 text-gray-700" />
                                   </div>
-                                  <h3 className="text-lg font-semibold text-white truncate">
+                                  <h3 className="text-lg font-semibold text-gray-700 truncate">
                                     {link.title || 'Sin título'}
                                   </h3>
                                 </div>
                                 
                                 <div className="space-y-2 mb-4">
-                                  <div className="flex items-center text-white/80">
+                                  <div className="flex items-center text-gray-600">
                                     <span className="text-sm">🔗 Enlace corto:</span>
-                                    <code className="ml-2 px-2 py-1 bg-black/20 rounded text-purple-200 font-mono text-sm">
+                                    <code className="ml-2 px-2 py-1 bg-gray-100 rounded text-gray-600 font-mono text-sm">
                                       {window.location.origin}/{link.short_url}
                                     </code>
                                   </div>
-                                  <div className="flex items-center text-white/70">
+                                  <div className="flex items-center text-gray-500">
                                     <span className="text-sm">🌐 Destino:</span>
                                     <span className="ml-2 text-sm truncate max-w-md">
                                       {link.original_url}
@@ -707,7 +692,7 @@ export default function Home() {
                                   </div>
                                 </div>
 
-                                <div className="flex items-center space-x-4 text-white/60">
+                                <div className="flex items-center space-x-4 text-gray-400">
                                   <div className="flex items-center">
                                     <BarChart3 className="w-4 h-4 mr-1" />
                                     <span className="text-sm">{link.visits} visitas</span>
@@ -734,26 +719,26 @@ export default function Home() {
                                     await navigator.clipboard.writeText(shortLink);
                                     toast.success('¡Copiado! ✨');
                                   }}
-                                  className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 group"
+                                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-300 group"
                                   title="Copiar enlace"
                                 >
-                                  <Copy className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                                  <Copy className="w-4 h-4 text-gray-700 group-hover:scale-110 transition-transform" />
                                 </button>
                                 
                                 <button
                                   onClick={() => setShowQR(link.short_url)}
-                                  className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 group"
+                                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-300 group"
                                   title="Mostrar QR"
                                 >
-                                  <QrCode className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                                  <QrCode className="w-4 h-4 text-gray-700 group-hover:scale-110 transition-transform" />
                                 </button>
                                 
                                 <button
                                   onClick={() => setEditingLink(link)}
-                                  className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-xl transition-all duration-300 group"
+                                  className="p-2 bg-yellow-400/20 hover:bg-yellow-400/30 rounded-xl transition-all duration-300 group"
                                   title="Editar"
                                 >
-                                  <Pencil className="w-4 h-4 text-blue-300 group-hover:scale-110 transition-transform" />
+                                  <Pencil className="w-4 h-4 text-yellow-300 group-hover:scale-110 transition-transform" />
                                 </button>
                                 
                                 <button
@@ -767,15 +752,15 @@ export default function Home() {
                             </div>
 
                             {link.script_code && link.script_code.length > 0 && (
-                              <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                                <h4 className="text-white/90 font-medium mb-2 flex items-center">
+                              <div className="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-200">
+                                <h4 className="text-gray-900 font-medium mb-2 flex items-center">
                                   🎯 Scripts Activos
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
                                   {link.script_code.map((script, index) => (
                                     <span 
                                       key={index} 
-                                      className="badge-modern text-xs"
+                                      className="badge-minimal text-xs"
                                       title={script.code.substring(0, 100)}
                                     >
                                       {script.name}
@@ -790,15 +775,15 @@ export default function Home() {
                     ))}
                   </div>
 
-                  <div className="mt-8 p-6 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl border border-white/10">
+                  <div className="mt-8 p-6 bg-gradient-to-r from-yellow-400/10 to-yellow-400/10 rounded-2xl border border-gray-200">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-white font-semibold mb-1">¿Necesitas más funciones?</h3>
-                        <p className="text-white/70 text-sm">Explora el dashboard completo para análisis avanzado</p>
+                        <h3 className="text-gray-700 font-semibold mb-1">¿Necesitas más funciones?</h3>
+                        <p className="text-gray-500 text-sm">Explora el dashboard completo para análisis avanzado</p>
                       </div>
                       <a
                         href="/dashboard"
-                        className="btn-gradient px-6 py-3"
+                        className="btn-accent px-6 py-3"
                       >
                         <span className="flex items-center">
                           Ver Dashboard
@@ -814,17 +799,17 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Modal QR moderno */}
+      {/* Modal QR minimalista */}
       {showQR && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="glass-card p-8 max-w-sm w-full mx-auto">
+          <div className="minimal-card p-8 max-w-sm w-full mx-auto">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 float-animation">
-                <QrCode className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 bg-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <QrCode className="w-8 h-8 text-black" />
               </div>
               
-              <h3 className="text-2xl font-bold text-white mb-2">Código QR</h3>
-              <p className="text-white/70 mb-6">Escanea para acceder al enlace</p>
+              <h3 className="text-2xl font-bold text-black mb-2">Código QR</h3>
+              <p className="text-gray-700 mb-6">Escanea para acceder al enlace</p>
               
               <div className="flex justify-center mb-6">
                 <div className="p-4 bg-white rounded-2xl">
@@ -844,7 +829,7 @@ export default function Home() {
                     await navigator.clipboard.writeText(shortLink);
                     toast.success('¡Enlace copiado! ✨');
                   }}
-                  className="btn-gradient w-full"
+                  className="btn-accent w-full"
                 >
                   <span className="flex items-center justify-center">
                     <Copy className="w-5 h-5 mr-2" />
@@ -864,29 +849,29 @@ export default function Home() {
         </div>
       )}
 
-      {/* Footer moderno */}
+      {/* Footer minimalista */}
       <footer className="relative mt-20 py-12">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <div className="glass-card p-8">
+          <div className="minimal-card p-8">
             <div className="flex items-center justify-center mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mr-4 float-animation">
-                <Link2 className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-yellow-400 rounded-2xl flex items-center justify-center mr-4">
+                <Link2 className="w-6 h-6 text-black" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">SCC Shortener</h3>
-                <p className="text-white/70 text-sm">Advanced URL Tracking</p>
+                <h3 className="text-xl font-bold text-black">SCC Shortener</h3>
+                <p className="text-gray-700 text-sm">Advanced URL Tracking</p>
               </div>
             </div>
             
-            <div className="flex items-center justify-center text-white/60 text-sm">
+            <div className="flex items-center justify-center text-gray-600 text-sm">
               <span>Desarrollado con</span>
               <span className="mx-2 text-red-400">❤️</span>
               <span>por</span>
-              <span className="ml-1 font-medium text-white/80">Santiago Ciro - Automscc</span>
+              <span className="ml-1 font-medium text-gray-800">Santiago Ciro - Automscc</span>
             </div>
             
-            <div className="mt-4 flex items-center justify-center space-x-4 text-white/40">
-              <div className="w-2 h-2 bg-green-400 rounded-full pulse-glow"></div>
+            <div className="mt-4 flex items-center justify-center space-x-4 text-gray-400">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full pulse-glow"></div>
               <span className="text-xs">Sistema funcionando perfectamente</span>
             </div>
           </div>

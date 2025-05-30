@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Mail, Lock, User, Sparkles, ArrowRight, Link2, Shield } from 'lucide-react';
+import { Mail, Lock, User, Link2, Shield } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -19,10 +19,10 @@ export default function Login() {
     try {
       if (isSignUp) {
         await signUp(email, password);
-        toast.success('¡Cuenta creada! 🎉 Verifica tu correo.');
+        toast.success('¡Cuenta creada! Verifica tu correo.');
       } else {
         await signIn(email, password);
-        toast.success('¡Bienvenido de vuelta! ✨');
+        toast.success('¡Bienvenido de vuelta!');
         navigate('/dashboard');
       }
     } catch (error) {
@@ -33,59 +33,50 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 relative">
-      {/* Elementos decorativos de fondo */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-3/4 left-1/2 w-48 h-48 bg-blue-400/20 rounded-full blur-3xl animate-pulse delay-500"></div>
-      </div>
-
-      <div className="max-w-md w-full space-y-8 relative z-10">
+    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4">
+      <div className="max-w-md w-full space-y-8">
         {/* Header con logo y título */}
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center float-animation shadow-2xl">
-              <Link2 className="w-10 h-10 text-white" />
+            <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center">
+              <Link2 className="w-8 h-8 text-white" />
             </div>
           </div>
           
-          <div className="space-y-4">
-            <h1 className="text-4xl font-bold text-white">
-              <span className="bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
-                SCC Shortener
-              </span>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold text-black">
+              SCC Shortener
             </h1>
             
-            <h2 className="text-2xl font-semibold text-white/90">
-              {isSignUp ? 'Crea tu cuenta' : 'Bienvenido de vuelta'}
+            <h2 className="text-xl font-semibold text-gray-700">
+              {isSignUp ? 'Crear cuenta' : 'Iniciar sesión'}
             </h2>
             
-            <p className="text-white/70 text-lg">
+            <p className="text-gray-600">
               {isSignUp 
-                ? 'Únete para crear enlaces inteligentes con seguimiento avanzado'
-                : 'Inicia sesión para gestionar tus enlaces'
+                ? 'Únete para crear enlaces con seguimiento avanzado'
+                : 'Accede a tu cuenta para gestionar enlaces'
               }
             </p>
           </div>
         </div>
 
         {/* Formulario principal */}
-        <div className="glass-card p-8 space-y-6">
+        <div className="minimal-card p-8 space-y-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Campo de email */}
             <div className="space-y-2">
-              <label className="block text-white/90 font-medium text-sm">
-                📧 Correo electrónico
+              <label className="block text-gray-900 font-medium text-sm">
+                Correo electrónico
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-white/50" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type="email"
                   required
-                  className="input-modern w-full pl-12"
+                  className="input-minimal pl-10"
                   placeholder="tu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -95,17 +86,17 @@ export default function Login() {
 
             {/* Campo de contraseña */}
             <div className="space-y-2">
-              <label className="block text-white/90 font-medium text-sm">
-                🔒 Contraseña
+              <label className="block text-gray-900 font-medium text-sm">
+                Contraseña
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-white/50" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type="password"
                   required
-                  className="input-modern w-full pl-12"
+                  className="input-minimal pl-10"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -117,29 +108,20 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`btn-gradient w-full py-4 text-lg font-semibold ${
+              className={`btn-accent w-full py-3 text-base font-semibold ${
                 isLoading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
               <span className="flex items-center justify-center">
                 {isLoading ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                    <div className="spinner mr-2"></div>
                     Procesando...
                   </>
                 ) : (
                   <>
-                    {isSignUp ? (
-                      <>
-                        <Sparkles className="w-5 h-5 mr-2" />
-                        Crear Cuenta
-                      </>
-                    ) : (
-                      <>
-                        <ArrowRight className="w-5 h-5 mr-2" />
-                        Iniciar Sesión
-                      </>
-                    )}
+                    <User className="w-4 h-4 mr-2" />
+                    {isSignUp ? 'Crear Cuenta' : 'Iniciar Sesión'}
                   </>
                 )}
               </span>
@@ -147,16 +129,7 @@ export default function Login() {
           </form>
 
           {/* Divisor */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/20"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white/10 text-white/70 rounded-full">
-                {isSignUp ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}
-              </span>
-            </div>
-          </div>
+          <div className="divider"></div>
 
           {/* Botón de alternancia */}
           <button
@@ -165,32 +138,31 @@ export default function Login() {
             className="btn-secondary w-full py-3"
           >
             <span className="flex items-center justify-center">
-              <User className="w-5 h-5 mr-2" />
-              {isSignUp ? 'Ya tengo cuenta' : 'Crear nueva cuenta'}
+              {isSignUp ? 'Ya tengo una cuenta' : 'Crear nueva cuenta'}
             </span>
           </button>
         </div>
 
         {/* Características destacadas */}
-        <div className="glass-card p-6">
-          <h3 className="text-white font-semibold mb-4 text-center">
-            ✨ Lo que obtienes
+        <div className="minimal-card p-6">
+          <h3 className="text-gray-900 font-semibold mb-4 text-center">
+            ✨ Características principales
           </h3>
           <div className="grid grid-cols-1 gap-3 text-sm">
-            <div className="flex items-center text-white/80">
-              <div className="w-2 h-2 bg-green-400 rounded-full mr-3 pulse-glow"></div>
+            <div className="flex items-center text-gray-700">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
               <span>Enlaces cortos ilimitados</span>
             </div>
-            <div className="flex items-center text-white/80">
-              <div className="w-2 h-2 bg-blue-400 rounded-full mr-3 pulse-glow"></div>
+            <div className="flex items-center text-gray-700">
+              <div className="w-2 h-2 bg-gray-400 rounded-full mr-3"></div>
               <span>Análisis en tiempo real</span>
             </div>
-            <div className="flex items-center text-white/80">
-              <div className="w-2 h-2 bg-purple-400 rounded-full mr-3 pulse-glow"></div>
+            <div className="flex items-center text-gray-700">
+              <div className="w-2 h-2 bg-black rounded-full mr-3"></div>
               <span>Scripts de seguimiento personalizados</span>
             </div>
-            <div className="flex items-center text-white/80">
-              <div className="w-2 h-2 bg-pink-400 rounded-full mr-3 pulse-glow"></div>
+            <div className="flex items-center text-gray-700">
+              <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
               <span>Dashboard profesional</span>
             </div>
           </div>
@@ -198,7 +170,7 @@ export default function Login() {
 
         {/* Footer de seguridad */}
         <div className="text-center">
-          <div className="flex items-center justify-center text-white/60 text-xs">
+          <div className="flex items-center justify-center text-gray-500 text-xs">
             <Shield className="w-4 h-4 mr-2" />
             <span>Tus datos están protegidos y encriptados</span>
           </div>
