@@ -75,7 +75,7 @@ export default function Dashboard() {
   const [draggedLink, setDraggedLink] = useState<Link | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
   const [openDropdownFolder, setOpenDropdownFolder] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'cards' | 'grid'>('grid');
+  const [viewMode, setViewMode] = useState<'cards' | 'grid'>('cards');
 
   const { user, loading } = useAuth();
   const navigate = useNavigate();
